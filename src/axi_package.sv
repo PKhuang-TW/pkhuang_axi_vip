@@ -39,8 +39,11 @@ package axi_package;
     } rsp_e;
     
     typedef enum {
-        TXN_READ,
-        TXN_WRITE
+        AW_TXN,
+        W_TXN,
+        B_TXN,
+        AR_TXN,
+        R_TXN
     } txn_kind_e;
     
     typedef enum {

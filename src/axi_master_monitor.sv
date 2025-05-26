@@ -4,7 +4,7 @@
 class axi_master_monitor #(
     type TXN = axi_transfer  
 ) extends uvm_monitor;
-    `uvm_component_param_utils(axi_master_monitor)
+    `uvm_component_param_utils(axi_master_monitor#(TXN))
 
     virtual axi_interface       vif;
     axi_config #(TXN)           cfg;
@@ -54,7 +54,7 @@ task axi_master_monitor::monitor_aw_channel();
         @(posedge vif.ACLK iff (vif.AWVALID == 1 && vif.AWREADY == 1) );
         `uvm_info ( get_full_name(), "Write Address Transaction Detected!", UVM_LOW )
         txn = TXN::type_id::create("txn");
-        txn.kind    = TXN_WRITE;
+        txn.kind    = AW_TXN;
         txn.id      = vif.AWID;
         txn.addr    = vif.AWADDR;
         txn.len     = vif.AWLEN;
@@ -79,7 +79,7 @@ task axi_master_monitor::monitor_w_channel();
 
         if ( pending_writes.exists(vif.WID) ) begin
             txn         = pending_writes[vif.WID];
-            txn.kind    = TXN_WRITE;
+            txn.kind    = W_TXN;
             txn.id      = vif.WID;
             txn.print();
         end else begin
@@ -97,7 +97,7 @@ task axi_master_monitor::monitor_b_channel();
 
         if ( pending_writes.exists(vif.BID) ) begin
             txn         = pending_writes[vif.BID];
-            txn.kind    = TXN_WRITE;
+            txn.kind    = B_TXN;
             txn.id      = vif.BID;
             txn.BRESP   = vif.BRESP;
             txn.print();
@@ -116,7 +116,7 @@ task axi_master_monitor::monitor_ar_channel();
         @(posedge vif.ACLK iff (vif.ARVALID == 1 && vif.ARREADY == 1) );
         `uvm_info ( get_full_name(), "Read Address Transaction Detected!", UVM_LOW )
         txn = TXN::type_id::create("txn");
-        txn.kind    = TXN_READ;
+        txn.kind    = AR_TXN;
         txn.id      = vif.ARID;
         txn.addr    = vif.ARADDR;
         txn.len     = vif.ARLEN;
@@ -141,7 +141,7 @@ task axi_master_monitor::monitor_r_channel();
 
         if ( pending_reads.exists(vif.RID) ) begin
             txn         = pending_reads[vif.RID];
-            txn.kind    = TXN_READ;
+            txn.kind    = R_TXN;
             txn.id      = vif.RID;
             txn.RRESP   = vif.RRESP;
             txn.RLAST   = vif.RLAST;
