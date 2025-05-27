@@ -3,29 +3,17 @@
 
 class axi_master_monitor #(
     type TXN = axi_transfer  
-) extends uvm_monitor;
+) extends uvm_monitor #(TXN);
     `uvm_component_param_utils(axi_master_monitor#(TXN))
-
-    virtual axi_interface       vif;
-    axi_config #(TXN)           cfg;
 
     TXN                         pending_writes[int], pending_reads[int];
 
-    uvm_analysis_port #(TXN)    ap_axi_write, ap_axi_read;
-
     function new (string name="axi_master_monitor");
         super.new();
-        ap_axi_write    = new("ap_axi_write", this);
-        ap_axi_read     = new("ap_axi_read", this);
     endfunction
 
     function build_phase (uvm_phase phase);
         super.build_phase(phase);
-
-        if ( !uvm_config_db #(axi_config #(TXN)) :: get (this, "", "mst_cfg", cfg) )
-            `uvm_error("NOCFG", "No master config is set for: ", get_full_name(), ".cfg")
-
-        vif = cfg.vif;
     endfunction
 
     function run_phase (uvm_phase phase);
@@ -38,13 +26,6 @@ class axi_master_monitor #(
             monitor_r_channel();
         join
     endfunction
-
-    extern virtual task monitor_aw_channel();
-    extern virtual task monitor_w_channel();
-    extern virtual task monitor_b_channel();
-    extern virtual task monitor_ar_channel();
-    extern virtual task monitor_r_channel();
-    
 endclass
 
 task axi_master_monitor::monitor_aw_channel();

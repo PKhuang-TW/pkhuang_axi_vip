@@ -3,13 +3,10 @@
 
 class axi_master_driver #(
     type TXN = axi_transfer
-) extends uvm_driver;
+) extends axi_driver_base #(TXN);
     `uvm_component_param_utils(axi_master_driver#(TXN))
 
-    axi_config #(TXN)       cfg;
-    virtual axi_interface   vif;
-
-    bit[7:0]                w_len, r_len;  // 0-based
+    bit[7:0]                w_len;  // 0-based
 
     function new (string name = "axi_master_driver");
         super.new(name);
@@ -17,34 +14,7 @@ class axi_master_driver #(
 
     function build_phase (uvm_phase phase);
         super.build_phase(phase);
-
-        if ( !uvm_config_db #(axi_config#(TXN)) :: get (this, "", "mst_cfg", cfg) )
-            `uvm_error("NOCFG", $sformatf("No master config is set for %s.cfg", get_full_name()) )
-        vif = cfg.vif;
-
-        reset_axi_signal();
     endfunction
-
-    virtual task run_phase ( uvm_phase phase );
-        forever begin
-            seq_item_port.get_next_item(req);
-            $cast(rsp, req.clone());
-            drive_item(rsp);
-            seq_item_port.item_done();
-
-            // Put response to avoid if the req has some problem
-            seq_item_port.put_response(rsp);
-        end        
-    endtask
-
-    extern virtual task drive_item(TXN txn);
-
-    extern virtual task reset_axi_signal();
-    extern virtual task reset_aw_signal();
-    extern virtual task reset_w_signal();
-    extern virtual task reset_b_signal();
-    extern virtual task reset_ar_signal();
-    extern virtual task reset_r_signal();
 
 endclass : axi_master_driver
 
@@ -109,6 +79,10 @@ virtual task axi_master_driver::drive_item ( TXN txn );
             end while ( vif.RLAST === 1'b0 );
             reset_r_signal();
         end
+
+        default: begin
+            `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()));
+        end
     endcase
 endtask : drive_item
 
@@ -154,13 +128,5 @@ virtual task axi_master_driver::reset_r_signal();
     @(posedge vif.ACLK);
     vif.RREADY  <= 0;
 endtask : reset_r_signal
-
-virtual task axi_master_driver::reset_axi_signal();
-    reset_aw_signal();
-    reset_w_signal();
-    reset_b_signal();
-    reset_ar_signal();
-    reset_r_signal();
-endtask : reset_axi_signal
 
 `endif
