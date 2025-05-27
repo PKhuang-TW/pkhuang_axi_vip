@@ -140,7 +140,7 @@ modport slv_if (
     input   RREADY
 );
 
-// To accidentally modifying interface signals within a monitor
+// To avoid accidentally modifying interface signals within a monitor
 modport mon_if (
     //////// Write Address ////////
     input   AWADDR,
