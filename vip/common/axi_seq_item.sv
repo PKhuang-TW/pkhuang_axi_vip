@@ -1,13 +1,13 @@
-`ifndef AXI_TRANSFER_SV
-`define AXI_TRANSFER_SV
+`ifndef AXI_SEQ_ITEM_SV
+`define AXI_SEQ_ITEM_SV
 
-class axi_transfer #(
+class axi_seq_item #(
     int ADDR_WIDTH  = axi_package::ADDR_WIDTH,
     int DATA_WIDTH  = axi_package::DATA_WIDTH,
     int ID_WIDTH    = axi_package::ID_WIDTH
 ) extends uvm_sequence_item;
 
-    typedef axi_transfer #(
+    typedef axi_seq_item #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .DATA_WIDTH (DATA_WIDTH),
         .ID_WIDTH   (ID_WIDTH)
@@ -86,7 +86,7 @@ class axi_transfer #(
     //  Group: Functions
 
     //  Constructor: new
-    function new(string name = "axi_transfer");
+    function new(string name = "axi_seq_item");
         super.new(name);
     endfunction: new
 
@@ -105,7 +105,7 @@ class axi_transfer #(
     //  Function: do_unpack
     // extern function void do_unpack();
     
-endclass: axi_transfer
+endclass: axi_seq_item
 
 
 /*----------------------------------------------------------------------------*/

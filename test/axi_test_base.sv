@@ -45,6 +45,8 @@ class axi_test_base #(
         mst_env =   axi_env_base #(TXN) :: type_id :: create ("mst_env", this);
         slv_env =   axi_env_base #(TXN) :: type_id :: create ("slv_env", this);
         // scb =   // TODO
+
+        // uvm_config_db #(axi_config#(TXN)) :: set ()  // TODO
     endfunction
 
     function connect_phase (uvm_phase phase);

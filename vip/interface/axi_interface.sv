@@ -182,4 +182,6 @@ modport mon_if (
     input   RREADY
 );
 
+endinterface
+
 `endif
