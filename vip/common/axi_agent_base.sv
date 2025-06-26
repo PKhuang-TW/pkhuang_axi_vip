@@ -1,14 +1,12 @@
 `ifndef AXI_AGENT_BASE_SV
 `define AXI_AGENT_BASE_SV
 
-class axi_agent_base #(
-    type TXN    = axi_transfer
-) extends uvm_agent;
-    `uvm_component_param_utils(axi_agent_base#(TXN))
+class axi_agent_base extends uvm_agent;
+    `uvm_component_utils(axi_agent_base)
 
-    axi_driver_base     #(TXN)  drv;
-    axi_monitor_base    #(TXN)  mon;
-    // axi_sequencer       #(TXN)  seqr;  // TODO
+    axi_driver_base                 drv;
+    axi_monitor_base                mon;
+    uvm_sequencer #(axi_seq_item)   seqr;
 
     function new (string name = "axi_agent_base");
         super.new(name);
@@ -17,9 +15,9 @@ class axi_agent_base #(
     function build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        drv =   axi_driver_base #(TXN)  :: type_id :: create ("drv", this);
-        mon =   axi_monitor_base #(TXN) :: type_id :: create ("mon", this);
-        // seqr =  axi_sequencer #(TXN)    :: type_id :: create ("seqr", this);  // TODO
+        drv =   axi_driver_base :: type_id :: create ("drv", this);
+        mon =   axi_monitor_base :: type_id :: create ("mon", this);
+        seqr =  uvm_sequencer #(axi_seq_item) :: type_id :: create ("seqr", this);
     endfunction
 
     function connect_phase (uvm_phase phase);

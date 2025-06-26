@@ -1,18 +1,14 @@
 `ifndef AXI_IF_SV
 `define AXI_IF_SV
 
-interface axi_if # (
-    int ADDR_WIDTH  = axi_package::ADDR_WIDTH,
-    int DATA_WIDTH  = axi_package::DATA_WIDTH,
-    int ID_WIDTH    = axi_package::ID_WIDTH
-)(
+interface axi_if (
     input logic ACLK,
     input logic ARESETn
 );
 
     // ----------- Write Address -----------
-    logic [ID_WIDTH-1:0]            AWID;
-    logic [ADDR_WIDTH-1:0]          AWADDR;
+    logic [`D_ID_WIDTH-1:0]         AWID;
+    logic [`D_ADDR_WIDTH-1:0]       AWADDR;
     logic [7:0]                     AWLEN;
     logic [2:0]                     AWSIZE;
     logic [1:0]                     AWBURST;
@@ -21,22 +17,22 @@ interface axi_if # (
     logic                           AWREADY;
 
     // ----------- Write Data -----------
-    logic [ID_WIDTH-1:0]            WID;
-    logic [DATA_WIDTH-1:0]          WDATA;
-    logic [(DATA_WIDTH>>3)-1:0]     WSTRB;
+    logic [`D_ID_WIDTH-1:0]         WID;
+    logic [`D_DATA_WIDTH-1:0]       WDATA;
+    logic [(`D_DATA_WIDTH>>3)-1:0]  WSTRB;
     logic                           WLAST;
     logic                           WVALID;
     logic                           WREADY;
 
     // ----------- Write Response -----------
-    logic [ID_WIDTH-1:0]            BID;
+    logic [`D_ID_WIDTH-1:0]         BID;
     logic [1:0]                     BRESP;
     logic                           BVALID;
     logic                           BREADY;
 
     // ----------- Read Address -----------
-    logic [ID_WIDTH-1:0]            ARID;
-    logic [ADDR_WIDTH-1:0]          ARADDR;
+    logic [`D_ID_WIDTH-1:0]         ARID;
+    logic [`D_ADDR_WIDTH-1:0]       ARADDR;
     logic [7:0]                     ARLEN;
     logic [2:0]                     ARSIZE;
     logic [1:0]                     ARBURST;
@@ -45,8 +41,8 @@ interface axi_if # (
     logic                           ARREADY;
 
     // ----------- Read Data -----------
-    logic [ID_WIDTH-1:0]            RID;
-    logic [DATA_WIDTH-1:0]          RDATA;
+    logic [`D_ID_WIDTH-1:0]         RID;
+    logic [`D_DATA_WIDTH-1:0]       RDATA;
     logic [1:0]                     RRESP;
     logic                           RLAST;
     logic                           RVALID;
@@ -137,48 +133,6 @@ modport slv_if (
     output  RRESP,
     output  RLAST,
     output  RVALID,
-    input   RREADY
-);
-
-// To avoid accidentally modifying interface signals within a monitor
-modport mon_if (
-    //////// Write Address ////////
-    input   AWADDR,
-    input   AWLEN,
-    input   AWSIZE,
-    input   AWBURST,
-    input   AWPROT,
-    input   AWVALID,
-    input   AWREADY,
-
-    //////// Write Data ////////
-    input   WDATA,
-    input   WSTRB,
-    input   WLAST,
-    input   WVALID,
-    input   WREADY,
-
-    //////// Write Response ////////
-    input   BID,
-    input   BRESP,
-    input   BVALID,
-    input   BREADY
-    
-    //////// Read Address ////////
-    input   ARADDR,
-    input   ARLEN,
-    input   ARSIZE,
-    input   ARBURST,
-    input   ARPROT,
-    input   ARVALID,
-    input   ARREADY
-    
-    //////// Read Data ////////
-    input   RID,
-    input   RDATA,
-    input   RRESP,
-    input   RLAST,
-    input   RVALID,
     input   RREADY
 );
 

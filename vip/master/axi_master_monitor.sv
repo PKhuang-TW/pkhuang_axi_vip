@@ -4,7 +4,7 @@
 class axi_master_monitor #(
     type TXN = axi_transfer  
 ) extends uvm_monitor #(TXN);
-    `uvm_component_param_utils(axi_master_monitor#(TXN))
+    `uvm_component_utils(axi_master_monitor#(TXN))
 
     TXN                         pending_writes[int], pending_reads[int];
 
