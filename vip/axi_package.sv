@@ -9,6 +9,7 @@ package axi_package;
     `include "axi_seq_item.sv"
     `include "axi_monitor_base.sv"
     `include "axi_driver_base.sv"
+    `include "axi_master_driver.sv"
     `include "axi_agent_base.sv"
     `include "axi_env.sv"
     `include "axi_basic_test.sv"

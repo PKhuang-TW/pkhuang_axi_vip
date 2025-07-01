@@ -61,7 +61,7 @@ class axi_seq_item extends uvm_sequence_item;
     `uvm_object_param_utils_end
 
     constraint c_kind {
-        kind == ( AW_TXN || AR_TXN );
+        soft kind == ( AW_TXN || AR_TXN );
     }
 
     //  Group: Constraints
