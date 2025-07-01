@@ -9,11 +9,11 @@ class axi_monitor_base extends uvm_monitor;
     axi_config                          cfg;
     virtual axi_interface               vif;
 
-    uvm_analysis_port #(axi_seq_item)   port;
+    uvm_analysis_port #(axi_seq_item)   ap;
 
     function new (string name="axi_monitor_base");
         super.new();
-        port = new("port", this);
+        ap = new("ap", this);
     endfunction
 
     function build_phase (uvm_phase phase);

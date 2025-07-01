@@ -2,8 +2,8 @@
 `define AXI_IF_SV
 
 interface axi_if (
-    input logic ACLK,
-    input logic ARESETn
+    input   ACLK,
+    input   ARESETn
 );
 
     // ----------- Write Address -----------
