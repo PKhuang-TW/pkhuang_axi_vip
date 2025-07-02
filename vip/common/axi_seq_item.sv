@@ -11,53 +11,69 @@ class axi_seq_item extends uvm_sequence_item;
     //-----------------------------------------------------------
     // Write 
     //-----------------------------------------------------------
+    rand bit[`D_ID_WIDTH-1:0]           aw_id;
+    rand bit[`D_ADDR_WIDTH-1:0]         aw_addr;
+    rand bit[7:0]                       aw_len;
+    rand bit[2:0]                       aw_size;
+    rand burst_type_e                   aw_burst;
+    rand prot_s                         aw_prot;
+
     rand bit[`D_ID_WIDTH-1:0]           w_id;
-    rand bit[`D_ADDR_WIDTH-1:0]         w_addr;
-    rand bit[7:0]                       w_len;
-    rand bit[2:0]                       w_size;
-    rand burst_type_e                   w_burst;
-    rand prot_s                         w_prot;
     rand bit[`D_DATA_WIDTH-1:0]         w_data[$];
     rand bit[(`D_DATA_WIDTH>>3)-1:0]    w_strb[$];
 
     rsp_e                               w_rsp;
+    bit[`D_ID_WIDTH-1:0]                b_id;
+    rsp_e                               b_rsp;
+    rsp_e                               exp_b_rsp;
+
 
     //-----------------------------------------------------------
     // Read 
     //-----------------------------------------------------------
-    rand bit[`D_ID_WIDTH-1:0]           r_id;
-    rand bit[`D_ADDR_WIDTH-1:0]         r_addr;
-    rand bit[7:0]                       r_len;
-    rand bit[2:0]                       r_size;
-    rand burst_type_e                   r_burst;
-    rand prot_s                         r_prot;
+    rand bit[`D_ID_WIDTH-1:0]           ar_id;
+    rand bit[`D_ADDR_WIDTH-1:0]         ar_addr;
+    rand bit[7:0]                       ar_len;
+    rand bit[2:0]                       ar_size;
+    rand burst_type_e                   ar_burst;
+    rand prot_s                         ar_prot;
 
+    bit[`D_ID_WIDTH-1:0]                r_id;
     bit[`D_DATA_WIDTH-1:0]              r_data[$];
     rsp_e                               r_rsp[$];
+    rsp_e                               exp_r_rsp[$];
+
+    localparam int MAX_TXN_SIZE = $clog2(`D_DATA_WIDTH / 8);
 
     `uvm_object_param_utils_begin(axi_seq_item)
         `uvm_field_enum(txn_kind_e, kind)
+        `uvm_field_int(aw_id)
+        `uvm_field_int(aw_addr)
+        `uvm_field_int(aw_len)
+        `uvm_field_int(aw_size)
+        `uvm_field_enum(burst_type_e, aw_burst)
+        `uvm_field_int(aw_prot.instruction)
+        `uvm_field_int(aw_prot.non_secure)
+        `uvm_field_int(aw_prot.privileged)
         `uvm_field_int(w_id)
-        `uvm_field_int(w_addr)
-        `uvm_field_int(w_len)
-        `uvm_field_int(w_size)
-        `uvm_field_enum(burst_type_e, w_burst)
-        `uvm_field_int(w_prot.instruction)
-        `uvm_field_int(w_prot.non_secure)
-        `uvm_field_int(w_prot.privileged)
         `uvm_field_queue_int(w_data)
         `uvm_field_queue_int(w_strb)
         `uvm_field_enum(rsp_e, w_rsp)
+        `uvm_field_int(b_id)
+        `uvm_field_enum(rsp_e, b_rsp)
+        `uvm_field_enum(rsp_e, exp_b_rsp)
+        `uvm_field_int(ar_id)
+        `uvm_field_int(ar_addr)
+        `uvm_field_int(ar_len)
+        `uvm_field_int(ar_size)
+        `uvm_field_enum(burst_type_e, ar_burst)
+        `uvm_field_int(ar_prot.instruction)
+        `uvm_field_int(ar_prot.non_secure)
+        `uvm_field_int(ar_prot.privileged)
         `uvm_field_int(r_id)
-        `uvm_field_int(r_addr)
-        `uvm_field_int(r_len)
-        `uvm_field_int(r_size)
-        `uvm_field_enum(burst_type_e, r_burst)
-        `uvm_field_int(r_prot.instruction)
-        `uvm_field_int(r_prot.non_secure)
-        `uvm_field_int(r_prot.privileged)
         `uvm_field_queue_int(r_data)
         `uvm_field_queue_enum(rsp_e, r_rsp)
+        `uvm_field_queue_enum(rsp_e, exp_r_rsp)
     `uvm_object_param_utils_end
 
     constraint c_kind {
