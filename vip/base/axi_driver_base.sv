@@ -1,12 +1,10 @@
 `ifndef AXI_DRIVER_BASE
 `define AXI_DRIVER_BASE
 
-class axi_driver_base extends uvm_driver;
+class axi_driver_base extends uvm_driver #(axi_seq_item);
     `uvm_component_utils(axi_driver_base)
 
     axi_seq_item            txn;
-
-    axi_config              cfg;
     virtual axi_interface   vif;
 
     function new (string name = "axi_driver_base");
@@ -16,9 +14,8 @@ class axi_driver_base extends uvm_driver;
     function build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if ( !uvm_config_db #(axi_config) :: get (this, "", "cfg", cfg) )
-            `uvm_error("NOCFG", $sformatf("No config is set for %s.cfg", get_full_name()) )
-        vif = cfg.vif;
+        if ( !uvm_config_db #(virtual axi_interface) :: get (this, "", "vif", vif) )
+            `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
 
         reset_axi_signal();
     endfunction
