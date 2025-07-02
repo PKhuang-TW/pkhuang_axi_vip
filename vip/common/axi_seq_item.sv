@@ -21,11 +21,11 @@ class axi_seq_item extends uvm_sequence_item;
     rand bit[`D_ID_WIDTH-1:0]           w_id;
     rand bit[`D_DATA_WIDTH-1:0]         w_data[$];
     rand bit[(`D_DATA_WIDTH>>3)-1:0]    w_strb[$];
+    bit                                 w_last;
 
-    rsp_e                               w_rsp;
     bit[`D_ID_WIDTH-1:0]                b_id;
-    rsp_e                               b_rsp;
-    rsp_e                               exp_b_rsp;
+    rsp_e                               b_resp;
+    rsp_e                               exp_b_resp;
 
 
     //-----------------------------------------------------------
@@ -40,8 +40,9 @@ class axi_seq_item extends uvm_sequence_item;
 
     bit[`D_ID_WIDTH-1:0]                r_id;
     bit[`D_DATA_WIDTH-1:0]              r_data[$];
-    rsp_e                               r_rsp[$];
-    rsp_e                               exp_r_rsp[$];
+    bit                                 r_last;
+    rsp_e                               r_resp[$];
+    rsp_e                               exp_r_resp[$];
 
     localparam int MAX_TXN_SIZE = $clog2(`D_DATA_WIDTH / 8);
 
@@ -58,10 +59,10 @@ class axi_seq_item extends uvm_sequence_item;
         `uvm_field_int(w_id)
         `uvm_field_queue_int(w_data)
         `uvm_field_queue_int(w_strb)
-        `uvm_field_enum(rsp_e, w_rsp)
+        `uvm_field_int(w_last)
         `uvm_field_int(b_id)
-        `uvm_field_enum(rsp_e, b_rsp)
-        `uvm_field_enum(rsp_e, exp_b_rsp)
+        `uvm_field_enum(rsp_e, b_resp)
+        `uvm_field_enum(rsp_e, exp_b_resp)
         `uvm_field_int(ar_id)
         `uvm_field_int(ar_addr)
         `uvm_field_int(ar_len)
@@ -72,8 +73,9 @@ class axi_seq_item extends uvm_sequence_item;
         `uvm_field_int(ar_prot.privileged)
         `uvm_field_int(r_id)
         `uvm_field_queue_int(r_data)
-        `uvm_field_queue_enum(rsp_e, r_rsp)
-        `uvm_field_queue_enum(rsp_e, exp_r_rsp)
+        `uvm_field_int(r_last)
+        `uvm_field_queue_enum(rsp_e, r_resp)
+        `uvm_field_queue_enum(rsp_e, exp_r_resp)
     `uvm_object_param_utils_end
 
     constraint c_kind   { soft kind == ( AW_TXN || AR_TXN ); }
