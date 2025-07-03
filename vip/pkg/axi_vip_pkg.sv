@@ -1,7 +1,7 @@
-`ifndef AXI_PACKAGE_SV
-`define AXI_PACKAGE_SV
+`ifndef AXI_VIP_PKG_SV
+`define AXI_VIP_PKG_SV
 
-package axi_package;
+package axi_vip_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 

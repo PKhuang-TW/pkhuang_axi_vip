@@ -44,7 +44,7 @@ class axi_seq_item extends uvm_sequence_item;
     rsp_e                               r_resp[$];
     rsp_e                               exp_r_resp[$];
 
-    localparam int MAX_TXN_SIZE = $clog2(`D_DATA_WIDTH / 8);
+    localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH / 8) : `D_MEM_SIZE;
 
     `uvm_object_param_utils_begin(axi_seq_item)
         `uvm_field_enum(txn_kind_e, kind)
@@ -97,10 +97,8 @@ class axi_seq_item extends uvm_sequence_item;
         ar_size <= MAX_TXN_SIZE;
     }
 
-    //  Group: Constraints
     constraint c_write_data_size {
         if ( kind == AW_TXN ) {
-            // drv will keep these data during AW
             w_data.size() == len+1;
             w_strb.size() == len+1;
         }

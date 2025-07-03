@@ -5,7 +5,7 @@ class axi_monitor_base extends uvm_monitor;
     `uvm_component_utils(axi_monitor_base)
 
     axi_seq_item                        txn;
-    virtual axi_interface               vif;
+    virtual axi_if                      vif;
 
     uvm_analysis_port #(axi_seq_item)   ap;
 
@@ -17,7 +17,7 @@ class axi_monitor_base extends uvm_monitor;
     function build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if ( !uvm_config_db #(virtual axi_interface) :: get (this, "", "vif", vif) )
+        if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )
             `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
     

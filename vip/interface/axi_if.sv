@@ -136,6 +136,50 @@ modport slv_if (
     input   RREADY
 );
 
+modport mon_if (
+    //////// Write Address ////////
+    input   AWID,
+    input   AWADDR,
+    input   AWLEN,
+    input   AWSIZE,
+    input   AWBURST,
+    input   AWPROT,
+    input   AWVALID,
+    input   AWREADY,
+
+    //////// Write Data ////////
+    input   WID,
+    input   WDATA,
+    input   WSTRB,
+    input   WLAST,
+    input   WVALID,
+    input   WREADY,
+
+    //////// Write Response ////////
+    input   BID,
+    input   BRESP,
+    input   BVALID,
+    input   BREADY,
+    
+    //////// Read Address ////////
+    input   ARID,
+    input   ARADDR,
+    input   ARLEN,
+    input   ARSIZE,
+    input   ARBURST,
+    input   ARPROT,
+    input   ARVALID,
+    input   ARREADY
+    
+    //////// Read Data ////////
+    input   RID,
+    input   RDATA,
+    input   RRESP,
+    input   RLAST,
+    input   RVALID,
+    input   RREADY
+);
+
 endinterface
 
 `endif
