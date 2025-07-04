@@ -12,6 +12,10 @@ class axi_master_driver extends axi_driver_base;
 
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
+
+        // if ( !uvm_config_db #(virtual axi_if.mst_if) :: get (this, "", "vif.mst_if", vif) )
+        //     `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
+
         mst_bfm = new( .vif(vif.mst_if) );
     endfunction
 
@@ -19,25 +23,20 @@ class axi_master_driver extends axi_driver_base;
         forever begin
             @ ( posedge vif.ACLK );
             if ( !vif.ARESETn ) begin
-                reset_axi_signal();
+                mst_bfm.reset_axi_signal();
             end else begin
                 txn = axi_seq_item :: type_id :: create ("txn");
                 seq_item_port.get_next_item(txn);
                 case ( txn.kind )
                     AW_TXN: begin
                         mst_bfm.drive_aw_txn(txn);
-                        reset_aw_signal();
                         mst_bfm.drive_w_txn(txn);
-                        reset_w_signal();
                         mst_bfm.drive_b_txn(txn);
-                        reset_b_signal();
                     end
 
                     AR_TXN: begin
                         mst_bfm.drive_ar_txn(txn);
-                        reset_ar_signal();
                         mst_bfm.drive_r_txn(txn);
-                        reset_r_signal();
                     end
                     
                     default: begin
