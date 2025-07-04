@@ -8,11 +8,11 @@ class axi_agent_base extends uvm_agent;
     axi_monitor_base                mon;
     uvm_sequencer #(axi_seq_item)   seqr;
 
-    function new (string name = "axi_agent_base");
-        super.new(name);
+    function new ( string name = "axi_agent_base", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
         drv =   axi_driver_base :: type_id :: create ("drv", this);
@@ -20,7 +20,7 @@ class axi_agent_base extends uvm_agent;
         seqr =  uvm_sequencer #(axi_seq_item) :: type_id :: create ("seqr", this);
     endfunction
 
-    function connect_phase (uvm_phase phase);
+    function void connect_phase (uvm_phase phase);
         super.connect_phase(phase);
         drv.seq_item_port.connect ( seqr.seq_item_export );
     endfunction

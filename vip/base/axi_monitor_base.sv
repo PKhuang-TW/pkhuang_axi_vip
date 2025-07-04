@@ -1,5 +1,5 @@
-`ifndef AXI_MONITOR_BASE
-`define AXI_MONITOR_BASE
+`ifndef AXI_MONITOR_BASE_SV
+`define AXI_MONITOR_BASE_SV
 
 class axi_monitor_base extends uvm_monitor;
     `uvm_component_utils(axi_monitor_base)
@@ -9,12 +9,12 @@ class axi_monitor_base extends uvm_monitor;
 
     uvm_analysis_port #(axi_seq_item)   ap;
 
-    function new (string name="axi_monitor_base");
-        super.new();
+    function new ( string name="axi_monitor_base", uvm_component parent );
+        super.new(name, parent);
         ap = new("ap", this);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
         if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )

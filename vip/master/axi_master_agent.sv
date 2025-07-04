@@ -13,12 +13,12 @@ class axi_master_agent extends axi_agent_base;
         factory.set_type_override_by_type(
             axi_driver_base::get_type(),
             axi_master_driver::get_type()
-        )
+        );
 
         factory.set_type_override_by_type(
             axi_monitor_base::get_type(),
             axi_master_monitor::get_type()
-        )
+        );
 
         super.build_phase(phase);
     endfunction

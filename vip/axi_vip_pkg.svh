@@ -6,9 +6,9 @@ package axi_vip_pkg;
     `include "uvm_macros.svh"
 
     `include "axi_define.svh"
+    `include "axi_typedef.svh"
     import axi_typedef::*;
 
-    `include "axi_define.svh"
     `include "axi_seq_item.sv"
     `include "axi_monitor_base.sv"
     `include "axi_master_monitor.sv"

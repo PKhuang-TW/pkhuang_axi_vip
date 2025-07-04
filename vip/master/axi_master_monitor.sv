@@ -4,11 +4,11 @@
 class axi_master_monitor extends axi_monitor_base;
     `uvm_component_utils(axi_master_monitor)
 
-    function new (string name="axi_master_monitor");
-        super.new();
+    function new ( string name="axi_master_monitor", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
     endfunction
 
@@ -33,7 +33,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.aw_size     = vif.AWSIZE;
             txn.aw_burst    = vif.AWBURST;
             txn.aw_prot     = vif.AWPROT;
-            port.write(txn);
+            ap.write(txn);
         end
     endtask : monitor_aw_channel
 
@@ -46,7 +46,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.w_data  = vif.WDATA;
             txn.w_strb  = vif.WSTRB;
             txn.w_last  = vif.WLAST;
-            port.write(txn);
+            ap.write(txn);
         end
     endtask : monitor_w_channel
 
@@ -56,8 +56,8 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = B_TXN;
             txn.b_id    = vif.BID;
-            txn.b_rsp   = vif.BRESP;
-            port.write(txn);
+            txn.b_resp  = vif.BRESP;
+            ap.write(txn);
         end
     endtask : monitor_b_channel
 
@@ -72,7 +72,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.ar_size     = vif.ARSIZE;
             txn.ar_burst    = vif.ARBURST;
             txn.ar_prot     = vif.ARPROT;
-            port.write(txn);
+            ap.write(txn);
         end
     endtask : monitor_ar_channel
 
@@ -85,7 +85,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.r_data  = vif.RDATA;
             txn.r_resp  = vif.RRESP;
             txn.r_last  = vif.RLAST;
-            port.write(txn);
+            ap.write(txn);
         end
     endtask : monitor_r_channel
 

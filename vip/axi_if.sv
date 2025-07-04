@@ -3,14 +3,14 @@
 
 interface axi_if;
     logic                           ACLK;
-    logic                           ARSETn;
+    logic                           ARESETn;
 
     // ----------- Write Address -----------
     logic [`D_ID_WIDTH-1:0]         AWID;
     logic [`D_ADDR_WIDTH-1:0]       AWADDR;
     logic [7:0]                     AWLEN;
     logic [2:0]                     AWSIZE;
-    logic [1:0]                     AWBURST;
+    burst_type_e                    AWBURST;
     logic [2:0]                     AWPROT;
     logic                           AWVALID;
     logic                           AWREADY;
@@ -34,7 +34,7 @@ interface axi_if;
     logic [`D_ADDR_WIDTH-1:0]       ARADDR;
     logic [7:0]                     ARLEN;
     logic [2:0]                     ARSIZE;
-    logic [1:0]                     ARBURST;
+    burst_type_e                    ARBURST;
     logic [2:0]                     ARPROT;
     logic                           ARVALID;
     logic                           ARREADY;
@@ -48,6 +48,10 @@ interface axi_if;
     logic                           RREADY;
 
 modport mst_if (
+    //////// Global Signals ////////
+    input   ACLK,
+    input   ARESETn,
+
     //////// Write Address ////////
     output  AWID,
     output  AWADDR,
@@ -92,6 +96,10 @@ modport mst_if (
 );
 
 modport slv_if (
+    //////// Global Signals ////////
+    input   ACLK,
+    input   ARESETn,
+
     //////// Write Address ////////
     input   AWID,
     input   AWADDR,
@@ -136,6 +144,10 @@ modport slv_if (
 );
 
 modport mon_if (
+    //////// Global Signals ////////
+    input   ACLK,
+    input   ARESETn,
+    
     //////// Write Address ////////
     input   AWID,
     input   AWADDR,

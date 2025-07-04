@@ -6,12 +6,13 @@ class axi_slave_driver extends axi_driver_base;
 
     axi_slave_bfm       slv_bfm;
 
-    function new (string name = "axi_slave_driver");
-        super.new(name);
+    function new ( string name = "axi_slave_driver", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
+        slv_bfm = new( .vif(vif.slv_if) );
     endfunction
 
     virtual task run_phase ( uvm_phase phase );

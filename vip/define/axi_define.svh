@@ -1,5 +1,5 @@
-`ifndef AXI_DEFINE_SV
-`define AXI_DEFINE_SV
+`ifndef AXI_DEFINE_SVH
+`define AXI_DEFINE_SVH
 
 `define D_ADDR_WIDTH        32
 `define D_DATA_WIDTH        32

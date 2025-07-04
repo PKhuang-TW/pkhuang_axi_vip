@@ -6,13 +6,13 @@ class axi_master_driver extends axi_driver_base;
 
     axi_master_bfm      mst_bfm;
 
-    function new (string name = "axi_master_driver");
-        super.new(name);
-        mst_bfm = new( .vif(vif.master) );
+    function new ( string name = "axi_master_driver", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
+        mst_bfm = new( .vif(vif.mst_if) );
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
@@ -22,7 +22,7 @@ class axi_master_driver extends axi_driver_base;
                 reset_axi_signal();
             end else begin
                 txn = axi_seq_item :: type_id :: create ("txn");
-                seq_item_port.start_item(txn);
+                seq_item_port.get_next_item(txn);
                 case ( txn.kind )
                     AW_TXN: begin
                         mst_bfm.drive_aw_txn(txn);

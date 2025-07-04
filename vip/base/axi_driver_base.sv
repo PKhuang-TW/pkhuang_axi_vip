@@ -1,5 +1,5 @@
-`ifndef AXI_DRIVER_BASE
-`define AXI_DRIVER_BASE
+`ifndef AXI_DRIVER_BASE_SV
+`define AXI_DRIVER_BASE_SV
 
 class axi_driver_base extends uvm_driver #(axi_seq_item);
     `uvm_component_utils(axi_driver_base)
@@ -7,11 +7,11 @@ class axi_driver_base extends uvm_driver #(axi_seq_item);
     axi_seq_item            txn;
     virtual axi_if          vif;
 
-    function new (string name = "axi_driver_base");
-        super.new(name);
+    function new ( string name = "axi_driver_base", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
         if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )

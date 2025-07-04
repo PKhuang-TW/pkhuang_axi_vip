@@ -4,13 +4,14 @@
 class axi_basic_test extends uvm_test;
     `uvm_component_utils(axi_basic_test)
 
-    axi_env     env;
+    axi_env         env;
+    axi_aw_seq      w_seq;
 
-    function new (string name = "axi_basic_test");
-        super.new(name);
+    function new ( string name = "axi_basic_test", uvm_component parent );
+        super.new(name, parent);
     endfunction
 
-    function build_phase (uvm_phase phase);
+    function void build_phase (uvm_phase phase);
         super.build_phase(phase);
         env = axi_env :: type_id :: create ("env", this);
     endfunction

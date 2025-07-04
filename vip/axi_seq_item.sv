@@ -2,6 +2,7 @@
 `define AXI_SEQ_ITEM_SV
 
 `include "axi_define.svh"
+import axi_typedef::*;
 
 class axi_seq_item extends uvm_sequence_item;
 
