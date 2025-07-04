@@ -6,56 +6,42 @@ For notebook of AXI, please refer to my [AXI notebook](https://hackmd.io/@PKhuan
 pkhuang_axi_vip/
 |
 ├── seq/
-│   ├── axi_base_seq.sv
-│   ├── axi_write_seq.sv
-│   ├── axi_read_seq.sv
-│   └── axi_loopback_seq.sv
+│   └── axi_aw_seq.sv
 │
-├── test/
-│   ├── axi_base_test.sv
-│   ├── axi_master_test.sv
-│   ├── axi_slave_test.sv
-│   └── axi_loopback_test.sv
-│
-├── top/
+├── tb/
 │   └── sim_top.sv
 │
+├── test/
+│   └── axi_basic_test.sv
+│
 ├── vip/
-|   ├── base/
-|   │   ├── axi_agent_base.sv
-|   │   ├── axi_driver_base.sv
-|   │   └── axi_monitor_base.sv
-|   │
-|   ├── common/
-|   │   ├── axi_config.sv
-|   │   ├── axi_coverage.sv
-|   │   ├── axi_define.svh
-|   │   ├── axi_scoreboard.sv
-|   │   └── axi_seq_item.sv
-|   │
-|   ├── env/
-|   │   └── axi_env.sv
-|   │
-|   ├── interface/
-|   │   └── axi_if.sv
-|   │
-|   ├── master/
-|   │   ├── axi_master_agent.sv
-|   │   ├── axi_master_bfm.sv
-|   │   ├── axi_master_bfm.svh
-|   │   ├── axi_master_driver.sv
-|   │   └── axi_master_monitor.sv
-|   │
-|   ├── pkg/
-|   │   └── axi_vip_pkg.svh
-|   │
-|   └── slave/
-|       ├── axi_slave_agent.sv
-|       ├── axi_slave_bfm.sv
-|       ├── axi_slave_bfm.svh
-|       ├── axi_slave_driver.sv
-|       ├── axi_slave_mem_model.sv
-|       └── axi_slave_monitor.sv
-|
-└── README.txt
+│   ├── base/
+│   │   ├── axi_agent_base.sv
+│   │   ├── axi_driver_base.sv
+│   │   └── axi_monitor_base.sv
+│   │
+│   ├── define/
+│   │   ├── axi_define.svh
+│   │   └── axi_typedef.svh
+│   │
+│   ├── master/
+│   │   ├── axi_master_agent.sv
+│   │   ├── axi_master_bfm.sv
+│   │   ├── axi_master_driver.sv
+│   │   └── axi_master_monitor.sv
+│   │
+│   ├── slave/
+│   │   ├── axi_slave_agent.sv
+│   │   ├── axi_slave_bfm.sv
+│   │   ├── axi_slave_driver.sv
+│   │   ├── axi_slave_mem_model.sv
+│   │   └── axi_slave_monitor.sv
+│   │
+│   ├── axi_env.sv
+│   ├── axi_if.sv
+│   ├── axi_seq_item.sv
+│   └── axi_vip_pkg.sv
+│
+└── README.md
+
 ```

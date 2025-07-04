@@ -1,10 +1,9 @@
 `ifndef AXI_IF_SV
 `define AXI_IF_SV
 
-interface axi_if (
-    input   ACLK,
-    input   ARESETn
-);
+interface axi_if;
+    logic                           ACLK;
+    logic                           ARSETn;
 
     // ----------- Write Address -----------
     logic [`D_ID_WIDTH-1:0]         AWID;
@@ -81,7 +80,7 @@ modport mst_if (
     output  ARBURST,
     output  ARPROT,
     output  ARVALID,
-    input   ARREADY
+    input   ARREADY,
     
     //////// Read Data ////////
     input   RID,
@@ -125,7 +124,7 @@ modport slv_if (
     input   ARBURST,
     input   ARPROT,
     input   ARVALID,
-    output  ARREADY
+    output  ARREADY,
     
     //////// Read Data ////////
     output  RID,
@@ -169,7 +168,7 @@ modport mon_if (
     input   ARBURST,
     input   ARPROT,
     input   ARVALID,
-    input   ARREADY
+    input   ARREADY,
     
     //////// Read Data ////////
     input   RID,
