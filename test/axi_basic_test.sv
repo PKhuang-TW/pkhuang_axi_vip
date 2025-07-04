@@ -18,7 +18,8 @@ class axi_basic_test extends uvm_test;
 
     virtual task run_phase ( uvm_phase phase );
         phase.raise_objection(this);
-        // TODO
+        w_seq = axi_aw_seq :: type_id :: create ("w_seq");
+        w_seq.start ( env.agt_mst.seqr );
         phase.drop_objection(this);
     endtask
 
