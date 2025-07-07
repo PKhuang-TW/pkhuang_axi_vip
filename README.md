@@ -1,6 +1,78 @@
-This is an AXI vip based on [AXI IHI0022E](https://developer.arm.com/documentation/ihi0022/e/?lang=en)
+# 📘 AXI UVM VIP Description
 
-For notebook of AXI, please refer to my [AXI notebook](https://hackmd.io/@PKhuang-TW/AXI_Notebook)
+## 🧩 Module Overview
+
+This project implements a complete, configurable, and reusable UVM Verification IP (VIP) for the AMBA® AXI4 protocol (based on [AXI IHI0022E](https://developer.arm.com/documentation/ihi0022/e/?lang=en)).  
+It is capable of operating in **master**, **slave**, or **loopback** mode, with support for configurable address/data widths, burst types, and transaction interleaving.
+
+The VIP is structured with layered UVM components, including agent, driver, monitor, sequencer, and protocol assertions.  
+Both passive and active agents are supported, and optional Bus Functional Models (BFMs) allow direct task-level control. The loopback mode connects the master and slave VIPs internally to validate protocol correctness and timing.
+
+### ✅ Supported Features
+
+- [x] Full AXI4 protocol support (AW, W, B, AR, R channels)
+- [x] Burst types: FIXED, INCR, WRAP
+- [x] Support for outstanding transactions by ID
+- [ ] Loopback testbench for functional regression
+- [x] AXI memory model for slave responses
+- [x] Configurable data/addr widths via `axi_define.svh`
+- [ ] Built-in SystemVerilog Assertions (SVA) for protocol timing
+- [ ] UVM scoreboard and functional coverage
+- [ ] Supports both UVM test + standalone BFM test (without UVM)
+
+---
+
+## 🔧 AXI Bus Interface Signals
+
+| Channel | Signal     | Dir   | Width             | Description                        |
+|---------|------------|-------|-------------------|------------------------------------|
+| Global  | ACLK       | In    | 1                 | Clock                              |
+|         | ARESETn    | In    | 1                 | Active-low reset                   |
+| AW      | AWID       | In    | `D_ID_WIDTH`      | Write address ID                   |
+|         | AWADDR     | In    | `D_ADDR_WIDTH`    | Write address                      |
+|         | AWLEN      | In    | 8                 | Burst length                       |
+|         | AWSIZE     | In    | 3                 | Burst size                         |
+|         | AWBURST    | In    | 2 / enum          | Burst type                         |
+|         | AWVALID    | In    | 1                 | Address valid                      |
+|         | AWREADY    | Out   | 1                 | Address ready                      |
+| W       | WID        | In    | `D_ID_WIDTH`      | Write data ID                      |
+|         | WDATA      | In    | `D_DATA_WIDTH`    | Write data                         |
+|         | WSTRB      | In    | `D_DATA_WIDTH/8`  | Write strobes                      |
+|         | WLAST      | In    | 1                 | Last write data                    |
+|         | WVALID     | In    | 1                 | Write valid                        |
+|         | WREADY     | Out   | 1                 | Write ready                        |
+| B       | BID        | Out   | `D_ID_WIDTH`      | Response ID                        |
+|         | BRESP      | Out   | 2 / enum          | Response code                      |
+|         | BVALID     | Out   | 1                 | Response valid                     |
+|         | BREADY     | In    | 1                 | Response ready                     |
+| AR      | ARID       | In    | `D_ID_WIDTH`      | Read address ID                    |
+|         | ARADDR     | In    | `D_ADDR_WIDTH`    | Read address                       |
+|         | ARLEN      | In    | 8                 | Burst length                       |
+|         | ARSIZE     | In    | 3                 | Burst size                         |
+|         | ARBURST    | In    | 2 / enum          | Burst type                         |
+|         | ARVALID    | In    | 1                 | Read valid                         |
+|         | ARREADY    | Out   | 1                 | Read ready                         |
+| R       | RID        | Out   | `D_ID_WIDTH`      | Read data ID                       |
+|         | RDATA      | Out   | `D_DATA_WIDTH`    | Read data                          |
+|         | RRESP      | Out   | 2 / enum          | Read response                      |
+|         | RLAST      | Out   | 1                 | Last read                          |
+|         | RVALID     | Out   | 1                 | Read valid                         |
+|         | RREADY     | In    | 1                 | Read ready                         |
+
+---
+
+## 🧪 AXI Testbench Modes
+
+### Loopback Test
+The VIP instantiates both master and slave agents. The master sends transactions that are looped back via slave BFM memory model.
+
+### Master-Only Test
+Use master VIP to drive a DUT slave, verify responses using monitor + scoreboard.
+
+### Slave-Only Test
+Use slave VIP to respond to a DUT master, with stimulus monitored via passive agent.
+
+---
 
 ```
 pkhuang_axi_vip/
