@@ -11,9 +11,14 @@ class id_info_map;
     bit [`D_MEM_ADDR_WIDTH-1:0]     addr_q[bit [`D_ID_WIDTH-1:0]][$];
     bit                             complete[bit [`D_ID_WIDTH-1:0]];
 
-    function bit scan_complete_id( logic [`D_ID_WIDTH-1:0] complete_id );
+    function bit scan_complete_id( output logic [`D_ID_WIDTH-1:0] complete_id );
         complete_id = 'x;
         foreach ( complete[id] ) begin
+            `uvm_info(
+                "scan_complete_id",
+                $sformatf("ID = 0x%h, complete = %0d", id, complete[id]),
+                UVM_DEBUG
+            )
             if (complete[id]) begin
                 complete_id = id;
                 return 1;
@@ -45,6 +50,12 @@ class axi_slave_mem_model extends uvm_object;
         id_info_map                     id_info;
         bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
         bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
+
+        `uvm_info(
+            "process_id_info_map",
+            $sformatf("op = %s, id = %0d, burst = %s, addr = %h, len = %0d, size = %0d", op.name, id, burst_type.name, addr, len, size),
+            UVM_HIGH
+        )
 
         if ( op == WRITE ) begin
             id_info = r_id_info_map;
@@ -110,6 +121,11 @@ class axi_slave_mem_model extends uvm_object;
         output bit [`D_ID_WIDTH-1:0]    complete_id
     );
         found_complete_id = w_id_info_map.scan_complete_id ( complete_id );
+        `uvm_info(
+            "process_b_op",
+            $sformatf("Complete ID = 0x%h", complete_id),
+            UVM_HIGH
+        )
     endtask
 
     virtual task process_r_op (
@@ -135,18 +151,32 @@ class axi_slave_mem_model extends uvm_object;
         id_info_map     id_info;
 
         if ( op == WRITE ) begin
-            id_info = r_id_info_map;
+            w_id_info_map.id = w_id_info_map.id.find with (item != id);
+            if ( w_id_info_map.len.exists(id) )
+                w_id_info_map.len.delete(id);
+            if ( w_id_info_map.size.exists(id) )
+                w_id_info_map.size.delete(id);
+            if ( w_id_info_map.addr_q.exists(id) )
+                w_id_info_map.addr_q.delete(id);
+            if ( w_id_info_map.complete.exists(id) )
+                w_id_info_map.complete.delete(id);
         end else if ( op == READ ) begin
-            id_info = w_id_info_map;
+            r_id_info_map.id = r_id_info_map.id.find with (item != id);
+            if ( r_id_info_map.len.exists(id) )
+                r_id_info_map.len.delete(id);
+            if ( r_id_info_map.size.exists(id) )
+                r_id_info_map.size.delete(id);
+            if ( r_id_info_map.addr_q.exists(id) )
+                r_id_info_map.addr_q.delete(id);
+            if ( r_id_info_map.complete.exists(id) )
+                r_id_info_map.complete.delete(id);
         end
 
-        id_info.id = id_info.id.find with (item != id);
-        if ( id_info.len.exists(id) )
-            id_info.len.delete(id);
-        if ( id_info.size.exists(id) )
-            id_info.size.delete(id);
-        if ( id_info.addr_q.exists(id) )
-            id_info.addr_q.delete(id);
+        `uvm_info(
+            "clr_id_info",
+            $sformatf("Clear info_map for ID = 0x%h", id),
+            UVM_HIGH
+        )
     endtask
 
 endclass

@@ -33,9 +33,7 @@ task axi_master_bfm::drive_aw_txn ( input axi_seq_item txn );
     vif.AWBURST <= txn.aw_burst;
     vif.AWPROT  <= txn.aw_prot;
 
-    @ ( posedge vif.ACLK );
     wait ( vif.AWREADY );
-
     @ ( posedge vif.ACLK );
     reset_aw_signal();
 endtask : drive_aw_txn
@@ -53,20 +51,18 @@ task axi_master_bfm::drive_w_txn ( input axi_seq_item txn );
             vif.WLAST <= 0;
         end
 
-        @ ( posedge vif.ACLK );
         wait ( vif.WREADY );
-
         @ ( posedge vif.ACLK );
         reset_w_signal();
     end
 endtask : drive_w_txn
 
 task axi_master_bfm::drive_b_txn ( input axi_seq_item txn );
-    vif.BREADY <= 1;
-    @ ( posedge vif.ACLK );
+    // @ ( posedge vif.ACLK );
     wait ( vif.BVALID );
-
     @ ( posedge vif.ACLK );
+    vif.BREADY <= 0;
+    #1;  // Simulate Delay
     reset_b_signal();
 endtask : drive_b_txn
 

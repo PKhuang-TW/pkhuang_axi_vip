@@ -29,10 +29,9 @@ endclass
 
 task axi_slave_bfm::aw_signal_handler();
     forever begin
-        @ ( posedge vif.ACLK );
+        // @ ( posedge vif.ACLK );
         wait ( vif.AWVALID );
 
-        vif.AWREADY <= 0;
         mem_model.process_id_info_map (
             .op(WRITE),
             .id(vif.AWID),
@@ -41,27 +40,28 @@ task axi_slave_bfm::aw_signal_handler();
             .len(vif.AWLEN),
             .size(vif.AWSIZE)
         );
-        vif.AWREADY <= 1;
 
         @ ( posedge vif.ACLK );
+        vif.AWREADY <= 0;
+        #1;  // Simulate Delay
         reset_aw_signal();
     end
 endtask : aw_signal_handler
 
 task axi_slave_bfm::w_signal_handler();
     forever begin
-        @ ( posedge vif.ACLK );
+        // @ ( posedge vif.ACLK );
         wait ( vif.WVALID );
 
-        vif.WREADY <= 0;
         mem_model.process_w_op (
             .id(vif.WID),
             .data(vif.WDATA),
             .last(vif.WLAST)
         );
-        vif.WREADY <= 1;
 
         @ ( posedge vif.ACLK );
+        vif.WREADY <= 0;
+        #1;  // Simulate Delay
         reset_w_signal();
     end
 endtask : w_signal_handler
@@ -70,7 +70,7 @@ task axi_slave_bfm::b_signal_handler();
     bit                     found_complete_id;
     bit [`D_ID_WIDTH-1:0]   complete_id;
     forever begin
-        @ ( posedge vif.ACLK );
+        // @ ( posedge vif.ACLK );
         wait ( vif.BREADY );
 
         mem_model.process_b_op ( found_complete_id, complete_id );
