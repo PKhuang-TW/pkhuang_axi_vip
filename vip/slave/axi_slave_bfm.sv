@@ -8,6 +8,7 @@ class axi_slave_bfm;
 
     function new ( virtual axi_if.slv_if vif );
         this.vif = vif;
+        mem_model = new();
     endfunction
 
     extern virtual task aw_signal_handler();
@@ -35,7 +36,7 @@ task axi_slave_bfm::aw_signal_handler();
         mem_model.process_id_info_map (
             .op(WRITE),
             .id(vif.AWID),
-            .burst_type(vif.AWBURST),
+            .burst_type( burst_type_e'(vif.AWBURST) ),
             .addr(vif.AWADDR),
             .len(vif.AWLEN),
             .size(vif.AWSIZE)
@@ -99,7 +100,7 @@ task axi_slave_bfm::ar_signal_handler();
         mem_model.process_id_info_map (
             .op(READ),
             .id(vif.ARID),
-            .burst_type(vif.ARBURST),
+            .burst_type( burst_type_e'(vif.ARBURST) ),
             .addr(vif.ARADDR),
             .len(vif.ARLEN),
             .size(vif.ARSIZE)

@@ -10,14 +10,16 @@ class axi_slave_agent extends axi_agent_base;
 
     function void build_phase ( uvm_phase phase );
 
-        factory.set_type_override_by_type(
+        factory.set_inst_override_by_type(
             axi_driver_base::get_type(),
-            axi_slave_driver::get_type()
+            axi_slave_driver::get_type(),
+            "*agt_slv.*"
         );
 
-        factory.set_type_override_by_type(
+        factory.set_inst_override_by_type(
             axi_monitor_base::get_type(),
-            axi_slave_monitor::get_type()
+            axi_slave_monitor::get_type(),
+            "*agt_slv.*"
         );
 
         super.build_phase(phase);

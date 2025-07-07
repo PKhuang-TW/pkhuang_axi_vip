@@ -31,7 +31,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.aw_addr     = vif.AWADDR;
             txn.aw_len      = vif.AWLEN;
             txn.aw_size     = vif.AWSIZE;
-            txn.aw_burst    = vif.AWBURST;
+            $cast ( txn.aw_burst, vif.AWBURST );
             txn.aw_prot     = vif.AWPROT;
             ap.write(txn);
         end
@@ -43,9 +43,11 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = W_TXN;
             txn.w_id    = vif.WID;
-            txn.w_data  = vif.WDATA;
-            txn.w_strb  = vif.WSTRB;
-            txn.w_last  = vif.WLAST;
+            while ( !txn.w_last ) begin
+                txn.w_data.push_back ( vif.WDATA );
+                txn.w_strb.push_back ( vif.WSTRB );
+                txn.w_last  = vif.WLAST;
+            end
             ap.write(txn);
         end
     endtask : monitor_w_channel
@@ -56,7 +58,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = B_TXN;
             txn.b_id    = vif.BID;
-            txn.b_resp  = vif.BRESP;
+            $cast ( txn.b_resp, vif.BRESP );
             ap.write(txn);
         end
     endtask : monitor_b_channel
@@ -70,7 +72,7 @@ class axi_master_monitor extends axi_monitor_base;
             txn.ar_addr     = vif.ARADDR;
             txn.ar_len      = vif.ARLEN;
             txn.ar_size     = vif.ARSIZE;
-            txn.ar_burst    = vif.ARBURST;
+            $cast ( txn.ar_burst, vif.ARBURST );
             txn.ar_prot     = vif.ARPROT;
             ap.write(txn);
         end
@@ -82,9 +84,11 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = R_TXN;
             txn.r_id    = vif.RID;
-            txn.r_data  = vif.RDATA;
-            txn.r_resp  = vif.RRESP;
-            txn.r_last  = vif.RLAST;
+            while ( !txn.r_last ) begin
+                txn.r_data.push_back ( vif.RDATA );
+                txn.r_resp.push_back ( rsp_e'(vif.RRESP) );
+                txn.r_last = vif.RLAST;
+            end
             ap.write(txn);
         end
     endtask : monitor_r_channel
