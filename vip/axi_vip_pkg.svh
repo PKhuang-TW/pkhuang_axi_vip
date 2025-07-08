@@ -30,7 +30,10 @@ package axi_vip_pkg;
     `include "axi_env.sv"
 
     `include "axi_aw_seq.sv"
+    `include "axi_rand_rw_seq.sv"
+
     `include "axi_basic_test.sv"
+    `include "axi_rand_rw_test.sv"
 
 endpackage
 
