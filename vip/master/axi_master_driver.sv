@@ -12,10 +12,6 @@ class axi_master_driver extends axi_driver_base;
 
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
-
-        // if ( !uvm_config_db #(virtual axi_if.mst_if) :: get (this, "", "vif.mst_if", vif) )
-        //     `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
-
         mst_bfm = new( .vif(vif.mst_if) );
     endfunction
 

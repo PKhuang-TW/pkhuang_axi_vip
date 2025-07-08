@@ -19,7 +19,7 @@ class axi_master_monitor extends axi_monitor_base;
             monitor_b_channel();
             monitor_ar_channel();
             monitor_r_channel();
-        join
+        join_none
     endtask
 
     virtual task monitor_aw_channel();
@@ -43,11 +43,12 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = W_TXN;
             txn.w_id    = vif.WID;
-            while ( !txn.w_last ) begin
+            do begin
                 txn.w_data.push_back ( vif.WDATA );
                 txn.w_strb.push_back ( vif.WSTRB );
                 txn.w_last  = vif.WLAST;
-            end
+                @ ( posedge vif.ACLK );
+            end while ( !vif.WLAST );
             ap.write(txn);
         end
     endtask : monitor_w_channel
@@ -84,11 +85,12 @@ class axi_master_monitor extends axi_monitor_base;
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = R_TXN;
             txn.r_id    = vif.RID;
-            while ( !txn.r_last ) begin
+            do begin
                 txn.r_data.push_back ( vif.RDATA );
                 txn.r_resp.push_back ( rsp_e'(vif.RRESP) );
                 txn.r_last = vif.RLAST;
-            end
+                @ ( posedge vif.ACLK );
+            end while ( !vif.RLAST );
             ap.write(txn);
         end
     endtask : monitor_r_channel

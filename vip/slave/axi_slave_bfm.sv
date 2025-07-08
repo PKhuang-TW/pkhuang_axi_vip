@@ -3,12 +3,12 @@
 
 class axi_slave_bfm;
 
-    axi_slave_mem_model     mem_model;
+    axi_mem_model           mem_model;
     virtual axi_if.slv_if   vif;
 
     function new ( virtual axi_if.slv_if vif );
         this.vif = vif;
-        mem_model = new();
+        mem_model = new("mem_model");
     endfunction
 
     extern virtual task aw_signal_handler();
@@ -16,6 +16,7 @@ class axi_slave_bfm;
     extern virtual task b_signal_handler();
     extern virtual task ar_signal_handler();
     extern virtual task r_signal_handler();
+    extern virtual task reset_signal_handler();
 
     extern virtual task reset_aw_signal();
     extern virtual task reset_w_signal();
@@ -56,6 +57,7 @@ task axi_slave_bfm::w_signal_handler();
         mem_model.process_w_op (
             .id(vif.WID),
             .data(vif.WDATA),
+            .strb(vif.WSTRB),
             .last(vif.WLAST)
         );
 
@@ -69,6 +71,7 @@ endtask : w_signal_handler
 task axi_slave_bfm::b_signal_handler();
     bit                     found_complete_id;
     bit [`D_ID_WIDTH-1:0]   complete_id;
+
     forever begin
         // @ ( posedge vif.ACLK );
         wait ( vif.BREADY );
@@ -152,6 +155,14 @@ task axi_slave_bfm::r_signal_handler();
         end
     end
 endtask : r_signal_handler
+
+task axi_slave_bfm::reset_signal_handler();
+    forever begin
+        @ ( posedge vif.ACLK );
+        if ( !vif.ARESETn )
+            reset_axi_signal();
+    end
+endtask
 
 task axi_slave_bfm::reset_aw_signal();
     vif.AWREADY <= 1;
