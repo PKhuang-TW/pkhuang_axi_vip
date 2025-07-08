@@ -79,7 +79,7 @@ class axi_seq_item extends uvm_sequence_item;
         `uvm_field_queue_enum(rsp_e, exp_r_resp, UVM_ALL_ON)
     `uvm_object_utils_end
 
-    constraint c_kind   { soft kind == ( AW_TXN || AR_TXN ); }
+    constraint c_kind   { soft kind dist { 0:=1, 3:=1 }; }  // AW: 50%, AR: 50%
     constraint c_burst  { aw_burst <= BURST_TYPE_WRAP; ar_burst <= BURST_TYPE_WRAP; }
     constraint c_id     { aw_id == w_id; }
 
@@ -91,6 +91,14 @@ class axi_seq_item extends uvm_sequence_item;
         } else if ( aw_burst == BURST_TYPE_WRAP ) {
             aw_len inside {1, 3, 7, 15};
         }
+
+        if ( ar_burst == BURST_TYPE_FIXED ) {
+            ar_len inside { [0:15] };
+        } else if ( ar_burst == BURST_TYPE_INCR ) {
+            ar_len inside { [0:255] };
+        } else if ( ar_burst == BURST_TYPE_WRAP ) {
+            ar_len inside {1, 3, 7, 15};
+        }
     }
 
     constraint c_size {
@@ -99,10 +107,8 @@ class axi_seq_item extends uvm_sequence_item;
     }
 
     constraint c_write_data_size {
-        if ( kind == AW_TXN ) {
-            w_data.size() == aw_len+1;
-            w_strb.size() == aw_len+1;
-        }
+        w_data.size() == aw_len+1;
+        w_strb.size() == aw_len+1;
     }
 
     constraint c_mem_overflow {
