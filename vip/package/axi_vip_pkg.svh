@@ -27,6 +27,8 @@ package axi_vip_pkg;
     `include "axi_agent_base.sv"
     `include "axi_master_agent.sv"
     `include "axi_slave_agent.sv"
+
+    `include "axi_scoreboard.sv"
     `include "axi_env.sv"
 
     `include "axi_aw_seq.sv"
