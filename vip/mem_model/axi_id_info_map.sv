@@ -1,7 +1,7 @@
 `ifndef AXI_ID_INFO_MAP_SV
 `define AXI_ID_INFO_MAP_SV
 
-class id_info_map;
+class axi_id_info_map;
 
     // Record all info (len, size, addr of each transfer) for each ID
     bit [`D_ID_WIDTH-1:0]           id[$];

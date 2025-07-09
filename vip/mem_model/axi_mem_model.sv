@@ -5,7 +5,7 @@ class axi_mem_model extends uvm_object;
     `uvm_object_utils(axi_mem_model)
     
     bit [`D_MEM_SIZE-1:0][7:0]      mem;
-    id_info_map                     r_id_info_map, w_id_info_map;
+    axi_id_info_map                     r_id_info_map, w_id_info_map;
 
     function new ( string name = "axi_mem_model" );
         super.new(name);
@@ -21,7 +21,7 @@ class axi_mem_model extends uvm_object;
         bit[7:0]                    len,
         bit[2:0]                    size
     );
-        id_info_map                     id_info;
+        axi_id_info_map                     id_info;
         bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
         bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
 
@@ -134,7 +134,7 @@ class axi_mem_model extends uvm_object;
         operation_e             op,
         bit [`D_ID_WIDTH-1:0]   id
     );
-        id_info_map     id_info;
+        axi_id_info_map     id_info;
 
         if ( op == WRITE ) begin
             id_info = w_id_info_map;
