@@ -5,7 +5,7 @@ class axi_mem_model extends uvm_object;
     `uvm_object_utils(axi_mem_model)
     
     bit [`D_MEM_SIZE-1:0][7:0]      mem;
-    axi_id_info_map                     r_id_info_map, w_id_info_map;
+    axi_id_info_map                 r_id_info_map, w_id_info_map;
 
     function new ( string name = "axi_mem_model" );
         super.new(name);
@@ -66,7 +66,7 @@ class axi_mem_model extends uvm_object;
 
         `uvm_info(
             "process_id_info_map",
-            $sformatf("op = %s, id = %0d, burst = %s, addr = %h, len = %0d, size = %0d", op.name, id, burst_type.name, addr, len, size),
+            $sformatf("%s TXN, id = 0x%h, burst = %s, addr = 0x%h, len = %0d, size = %0d", op.name, id, burst_type.name, addr, len, size),
             UVM_HIGH
         )
     endfunction
@@ -89,7 +89,7 @@ class axi_mem_model extends uvm_object;
 
                 `uvm_info(
                     "process_w_op",
-                    $sformatf("Write mem[0x%h] = 0x%h done!", (addr+i), data[7+8*i -: 8]),
+                    $sformatf("Write TXN ID=0x%h, write mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
                     UVM_HIGH
                 )
             end
@@ -108,7 +108,7 @@ class axi_mem_model extends uvm_object;
         if ( found_complete_id ) begin
             `uvm_info(
                 "process_b_op",
-                $sformatf("Complete ID = 0x%h", complete_id),
+                $sformatf("Write TXN ID=0x%h completes", complete_id),
                 UVM_HIGH
             )
         end
@@ -127,6 +127,12 @@ class axi_mem_model extends uvm_object;
 
         for ( int i=0; i<(1 << size); i++ ) begin
             data[7+8*i -: 8] = mem[addr + i];
+
+            `uvm_info(
+                "process_r_op",
+                $sformatf("Read TXN ID=0x%h, read mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
+                UVM_HIGH
+            )
         end
     endfunction
 
@@ -154,7 +160,7 @@ class axi_mem_model extends uvm_object;
 
         `uvm_info(
             "clr_id_info",
-            $sformatf("Clear info_map for ID = 0x%h", id),
+            $sformatf("Clear %s TXN info_map for ID = 0x%h", op.name(), id),
             UVM_HIGH
         )
     endfunction

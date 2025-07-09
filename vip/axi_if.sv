@@ -47,149 +47,89 @@ interface axi_if;
     logic                           RVALID;
     logic                           RREADY;
 
-modport mst_if (
-    //////// Global Signals ////////
-    input   ACLK,
-    input   ARESETn,
 
-    //////// Write Address ////////
-    output  AWID,
-    output  AWADDR,
-    output  AWLEN,
-    output  AWSIZE,
-    output  AWBURST,
-    output  AWPROT,
-    output  AWVALID,
-    input   AWREADY,
+    clocking mon_cb @( posedge ACLK );
+        default input #1step;
 
-    //////// Write Data ////////
-    output  WID,
-    output  WDATA,
-    output  WSTRB,
-    output  WLAST,
-    output  WVALID,
-    input   WREADY,
+        //////// Global Signals ////////
+        input #0    ACLK;
+        input #0    ARESETn;
 
-    //////// Write Response ////////
-    input   BID,
-    input   BRESP,
-    input   BVALID,
-    output  BREADY,
-    
-    //////// Read Address ////////
-    output  ARID,
-    output  ARADDR,
-    output  ARLEN,
-    output  ARSIZE,
-    output  ARBURST,
-    output  ARPROT,
-    output  ARVALID,
-    input   ARREADY,
-    
-    //////// Read Data ////////
-    input   RID,
-    input   RDATA,
-    input   RRESP,
-    input   RLAST,
-    input   RVALID,
-    output  RREADY
-);
+        //////// Write Address ////////
+        input       AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWPROT, AWVALID, AWREADY;
 
-modport slv_if (
-    //////// Global Signals ////////
-    input   ACLK,
-    input   ARESETn,
+        //////// Write Data ////////
+        input       WID, WDATA, WSTRB, WLAST, WVALID, WREADY;
 
-    //////// Write Address ////////
-    input   AWID,
-    input   AWADDR,
-    input   AWLEN,
-    input   AWSIZE,
-    input   AWBURST,
-    input   AWPROT,
-    input   AWVALID,
-    output  AWREADY,
+        //////// Write Response ////////
+        input       BID, BRESP, BVALID, BREADY;
+        
+        //////// Read Address ////////
+        input       ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARPROT, ARVALID, ARREADY;
+        
+        //////// Read Data ////////
+        input       RID, RDATA, RRESP, RLAST, RVALID, RREADY;
+    endclocking
 
-    //////// Write Data ////////
-    input   WID,
-    input   WDATA,
-    input   WSTRB,
-    input   WLAST,
-    input   WVALID,
-    output  WREADY,
+    clocking mst_cb @( posedge ACLK );
+        default input #1step output #0;
 
-    //////// Write Response ////////
-    output  BID,
-    output  BRESP,
-    output  BVALID,
-    input   BREADY,
-    
-    //////// Read Address ////////
-    input   ARID,
-    input   ARADDR,
-    input   ARLEN,
-    input   ARSIZE,
-    input   ARBURST,
-    input   ARPROT,
-    input   ARVALID,
-    output  ARREADY,
-    
-    //////// Read Data ////////
-    output  RID,
-    output  RDATA,
-    output  RRESP,
-    output  RLAST,
-    output  RVALID,
-    input   RREADY
-);
+        //////// Global Signals ////////
+        input #0    ACLK;
+        input #0    ARESETn;
 
-modport mon_if (
-    //////// Global Signals ////////
-    input   ACLK,
-    input   ARESETn,
-    
-    //////// Write Address ////////
-    input   AWID,
-    input   AWADDR,
-    input   AWLEN,
-    input   AWSIZE,
-    input   AWBURST,
-    input   AWPROT,
-    input   AWVALID,
-    input   AWREADY,
+        //////// Write Address ////////
+        output      AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWPROT, AWVALID;
+        input       AWREADY;
 
-    //////// Write Data ////////
-    input   WID,
-    input   WDATA,
-    input   WSTRB,
-    input   WLAST,
-    input   WVALID,
-    input   WREADY,
+        //////// Write Data ////////
+        output      WID, WDATA, WSTRB, WLAST, WVALID;
+        input       WREADY;
 
-    //////// Write Response ////////
-    input   BID,
-    input   BRESP,
-    input   BVALID,
-    input   BREADY,
-    
-    //////// Read Address ////////
-    input   ARID,
-    input   ARADDR,
-    input   ARLEN,
-    input   ARSIZE,
-    input   ARBURST,
-    input   ARPROT,
-    input   ARVALID,
-    input   ARREADY,
-    
-    //////// Read Data ////////
-    input   RID,
-    input   RDATA,
-    input   RRESP,
-    input   RLAST,
-    input   RVALID,
-    input   RREADY
-);
+        //////// Write Response ////////
+        input       BID, BRESP, BVALID;
+        output      BREADY;
+        
+        //////// Read Address ////////
+        output      ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARPROT, ARVALID;
+        input       ARREADY;
+        
+        //////// Read Data ////////
+        input       RID, RDATA, RRESP, RLAST, RVALID;
+        output      RREADY;
+    endclocking
+
+    clocking slv_cb @( posedge ACLK );
+        default input #1step;
+
+        //////// Global Signals ////////
+        input #0    ACLK;
+        input #0    ARESETn;
+
+        //////// Write Address ////////
+        input       AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWPROT, AWVALID;
+        output      AWREADY;
+
+        //////// Write Data ////////
+        input       WID, WDATA, WSTRB, WLAST, WVALID;
+        output      WREADY;
+
+        //////// Write Response ////////
+        output      BID, BRESP, BVALID;
+        input       BREADY;
+        
+        //////// Read Address ////////
+        input       ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARPROT, ARVALID;
+        output      ARREADY;
+        
+        //////// Read Data ////////
+        output      RID, RDATA, RRESP, RLAST, RVALID;
+        input       RREADY;
+    endclocking
+
+    modport mst_if ( clocking mst_cb );
+    modport slv_if ( clocking slv_cb );
+    modport mon_if ( clocking mon_cb );
 
 endinterface
 

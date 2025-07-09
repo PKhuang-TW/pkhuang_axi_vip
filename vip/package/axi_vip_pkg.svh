@@ -17,7 +17,7 @@ package axi_vip_pkg;
     `include "axi_master_monitor.sv"
     `include "axi_slave_monitor.sv"
 
-    `include "axi_master_bfm.sv"
+    // `include "axi_master_bfm.sv"
     `include "axi_slave_bfm.sv"
 
     `include "axi_driver_base.sv"

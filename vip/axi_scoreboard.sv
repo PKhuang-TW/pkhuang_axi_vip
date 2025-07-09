@@ -25,6 +25,7 @@ class axi_scoreboard extends uvm_scoreboard;
 
         case (txn.kind)
             AW_TXN: begin
+                `uvm_info("SCB", "Handle AW Signal", UVM_HIGH)
                 mem_model.process_id_info_map (
                     .op(WRITE),
                     .id(txn.aw_id),
@@ -37,6 +38,7 @@ class axi_scoreboard extends uvm_scoreboard;
 
             W_TXN: begin
                 for ( int i=0; i<txn.w_data.size(); i++ ) begin
+                    `uvm_info("SCB", "Handle W Signal", UVM_HIGH)
                     mem_model.process_w_op (
                         .id(txn.w_id),
                         .data(txn.w_data[i]),
@@ -58,6 +60,7 @@ class axi_scoreboard extends uvm_scoreboard;
                         $sformatf("Write TXN (ID=%0d) is not ready for Response yet!", txn.b_id)
                     )
                 end else begin  // PASS
+                    `uvm_info("SCB", "B Signal Completes!", UVM_HIGH)
                     mem_model.clr_id_info (
                         .op(WRITE),
                         .id(txn.b_id)
@@ -66,6 +69,7 @@ class axi_scoreboard extends uvm_scoreboard;
             end
 
             AR_TXN: begin
+                `uvm_info("SCB", "Handle AR Signal", UVM_HIGH)
                 mem_model.process_id_info_map (
                     .op(READ),
                     .id(txn.ar_id),
@@ -91,6 +95,7 @@ class axi_scoreboard extends uvm_scoreboard;
                                 $sformatf("Read TXN Resp = %s while expected RSP_OKAY", txn.r_resp[i])
                             )
                         end else begin
+                            `uvm_info("SCB", "Handle R Signal", UVM_HIGH)
                             mem_model.process_r_op (
                                 .id(txn.r_id),
                                 .data(data)

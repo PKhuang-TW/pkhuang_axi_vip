@@ -30,40 +30,40 @@ endclass
 
 task axi_slave_bfm::aw_signal_handler();
     forever begin
-        // @ ( posedge vif.ACLK );
-        wait ( vif.AWVALID );
+        wait ( vif.slv_cb.AWVALID );
 
+        `uvm_info("SLV_BFM", "Handle AW Signal", UVM_HIGH)
+        vif.slv_cb.AWREADY <= 0;
         mem_model.process_id_info_map (
             .op(WRITE),
-            .id(vif.AWID),
-            .burst_type( burst_type_e'(vif.AWBURST) ),
-            .addr(vif.AWADDR),
-            .len(vif.AWLEN),
-            .size(vif.AWSIZE)
+            .id(vif.slv_cb.AWID),
+            .burst_type( burst_type_e'(vif.slv_cb.AWBURST) ),
+            .addr(vif.slv_cb.AWADDR),
+            .len(vif.slv_cb.AWLEN),
+            .size(vif.slv_cb.AWSIZE)
         );
 
-        @ ( posedge vif.ACLK );
-        vif.AWREADY <= 0;
         #1;  // Simulate Delay
+        // @ ( vif.slv_cb );
         reset_aw_signal();
     end
 endtask : aw_signal_handler
 
 task axi_slave_bfm::w_signal_handler();
     forever begin
-        // @ ( posedge vif.ACLK );
-        wait ( vif.WVALID );
+        wait ( vif.slv_cb.WVALID );
 
+        `uvm_info("SLV_BFM", "Handle W Signal", UVM_HIGH)
+        vif.slv_cb.WREADY <= 0;
         mem_model.process_w_op (
-            .id(vif.WID),
-            .data(vif.WDATA),
-            .strb(vif.WSTRB),
-            .last(vif.WLAST)
+            .id(vif.slv_cb.WID),
+            .data(vif.slv_cb.WDATA),
+            .strb(vif.slv_cb.WSTRB),
+            .last(vif.slv_cb.WLAST)
         );
 
-        @ ( posedge vif.ACLK );
-        vif.WREADY <= 0;
-        #1;  // Simulate Delay
+        #1step;  // Simulate Delay
+        @ ( vif.slv_cb );
         reset_w_signal();
     end
 endtask : w_signal_handler
@@ -73,44 +73,43 @@ task axi_slave_bfm::b_signal_handler();
     bit [`D_ID_WIDTH-1:0]   complete_id;
 
     forever begin
-        // @ ( posedge vif.ACLK );
-        wait ( vif.BREADY );
+        wait ( vif.slv_cb.BREADY );
 
         mem_model.process_b_op ( found_complete_id, complete_id );
         if ( found_complete_id ) begin
-            vif.BVALID  <= 0;
-            vif.BRESP   <= RSP_OKAY;  // default okay
-            vif.BID     <= complete_id;
-            #1;  // simulate delay
+            `uvm_info("SLV_BFM", $sformatf("B Signal Completes! (ID = 0x%h)", complete_id), UVM_HIGH)
+            vif.slv_cb.BRESP   <= RSP_OKAY;  // default okay
+            vif.slv_cb.BID     <= complete_id;
+            vif.slv_cb.BVALID  <= 1;
             mem_model.clr_id_info (
                 .op(WRITE),
                 .id(complete_id)
             );
-            vif.BVALID  <= 1;
         end
-
-        @ ( posedge vif.ACLK );
+        
+        #1;  // Simulate Delay
         reset_b_signal();
     end
 endtask : b_signal_handler
 
 task axi_slave_bfm::ar_signal_handler();
     forever begin
-        @ ( posedge vif.ACLK );
-        wait ( vif.ARVALID );
+        @ ( vif.slv_cb );
+        wait ( vif.slv_cb.ARVALID );
 
-        vif.ARREADY <= 0;
+        `uvm_info("SLV_BFM", "Handle AR Signal", UVM_HIGH)
         mem_model.process_id_info_map (
             .op(READ),
-            .id(vif.ARID),
-            .burst_type( burst_type_e'(vif.ARBURST) ),
-            .addr(vif.ARADDR),
-            .len(vif.ARLEN),
-            .size(vif.ARSIZE)
+            .id(vif.slv_cb.ARID),
+            .burst_type( burst_type_e'(vif.slv_cb.ARBURST) ),
+            .addr(vif.slv_cb.ARADDR),
+            .len(vif.slv_cb.ARLEN),
+            .size(vif.slv_cb.ARSIZE)
         );
-        vif.ARREADY <= 1;
 
-        @ ( posedge vif.ACLK );
+        // @ ( vif.slv_cb );
+        vif.slv_cb.ARREADY <= 0;
+        #1;  // Simulate Delay
         reset_ar_signal();
     end
 endtask : ar_signal_handler
@@ -121,35 +120,40 @@ task axi_slave_bfm::r_signal_handler();
     bit [`D_DATA_WIDTH-1:0]  data;
 
     forever begin
-        @ ( posedge vif.ACLK );
+        @ ( vif.slv_cb );
         if ( mem_model.r_id_info_map.id.size() > 0 ) begin
             id = mem_model.r_id_info_map.id[0];
             len = mem_model.r_id_info_map.len[id];
 
+            `uvm_info(
+                "r_signal_handler",
+                $sformatf("Handle R Signal: ID=0x%h, len=0x%h", id, len),
+                UVM_HIGH
+            )
             for ( int i=0; i<=len; i++) begin
                 mem_model.process_r_op (
                     .id(id),
                     .data(data)
                 );
-                vif.RVALID  <= 1;
-                vif.RID     <= id;
-                vif.RDATA   <= data;
-                vif.RRESP   <= RSP_OKAY;  // default ok
+                vif.slv_cb.RID     <= id;
+                vif.slv_cb.RDATA   <= data;
+                vif.slv_cb.RRESP   <= RSP_OKAY;  // default ok
 
                 if ( i==len ) begin
-                    vif.RLAST <= 1;
+                    vif.slv_cb.RLAST <= 1;
                     mem_model.clr_id_info (
                         .op(READ),
                         .id(id)
                     );
                 end else begin
-                    vif.RLAST <= 0;
+                    vif.slv_cb.RLAST <= 0;
                 end
+                vif.slv_cb.RVALID  <= 1;
 
-                @ ( posedge vif.ACLK );
-                wait ( vif.RREADY );
+                @ ( vif.slv_cb );
+                wait ( vif.slv_cb.RREADY );
 
-                @ ( posedge vif.ACLK );
+                @ ( vif.slv_cb );
                 reset_r_signal();
             end
         end
@@ -158,44 +162,61 @@ endtask : r_signal_handler
 
 task axi_slave_bfm::reset_signal_handler();
     forever begin
-        @ ( posedge vif.ACLK );
-        if ( !vif.ARESETn )
+        @ ( vif.slv_cb );
+        if ( !vif.slv_cb.ARESETn )
             reset_axi_signal();
     end
 endtask
 
 task axi_slave_bfm::reset_aw_signal();
-    vif.AWREADY <= 1;
+    begin
+        vif.slv_cb.AWREADY <= 1;
+        @ ( vif.slv_cb );
+    end
 endtask : reset_aw_signal
 
 task axi_slave_bfm::reset_w_signal();
-    vif.WREADY  <= 1;
+    begin
+        vif.slv_cb.WREADY  <= 1;
+        @ ( vif.slv_cb );
+    end
 endtask : reset_w_signal
 
 task axi_slave_bfm::reset_b_signal();
-    vif.BID     <= 0;
-    vif.BRESP   <= 0;
-    vif.BVALID  <= 0;
+    begin
+        vif.slv_cb.BID     <= 0;
+        vif.slv_cb.BRESP   <= 0;
+        vif.slv_cb.BVALID  <= 0;
+        // @ ( vif.slv_cb );
+    end
 endtask : reset_b_signal
 
 task axi_slave_bfm::reset_ar_signal();
-    vif.ARREADY <= 1;
+    begin
+        vif.slv_cb.ARREADY <= 1;
+        @ ( vif.slv_cb );
+    end
 endtask : reset_ar_signal
 
 task axi_slave_bfm::reset_r_signal();
-    vif.RID     <= 0;
-    vif.RDATA   <= 0;
-    vif.RRESP   <= 0;
-    vif.RLAST   <= 0;
-    vif.BVALID  <= 0;
+    begin
+        vif.slv_cb.RID     <= 0;
+        vif.slv_cb.RDATA   <= 0;
+        vif.slv_cb.RRESP   <= 0;
+        vif.slv_cb.RLAST   <= 0;
+        vif.slv_cb.RVALID  <= 0;
+        // @ ( vif.slv_cb );
+    end
 endtask : reset_r_signal
 
 task axi_slave_bfm::reset_axi_signal();
-    reset_aw_signal();
-    reset_w_signal();
-    reset_b_signal();
-    reset_ar_signal();
-    reset_r_signal();
+    fork
+        reset_aw_signal();
+        reset_w_signal();
+        reset_b_signal();
+        reset_ar_signal();
+        reset_r_signal();
+    join
 endtask : reset_axi_signal
 
 `endif

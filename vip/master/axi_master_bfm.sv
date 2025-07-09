@@ -25,106 +25,106 @@ class axi_master_bfm;
 endclass
 
 task axi_master_bfm::drive_aw_txn ( input axi_seq_item txn );
-    vif.AWVALID <= 1;
-    vif.AWID    <= txn.aw_id;
-    vif.AWADDR  <= txn.aw_addr;
-    vif.AWLEN   <= txn.aw_len;
-    vif.AWSIZE  <= txn.aw_size;
-    vif.AWBURST <= txn.aw_burst;
-    vif.AWPROT  <= txn.aw_prot;
+    vif.mst_cb.AWVALID <= 1;
+    vif.mst_cb.AWID    <= txn.aw_id;
+    vif.mst_cb.AWADDR  <= txn.aw_addr;
+    vif.mst_cb.AWLEN   <= txn.aw_len;
+    vif.mst_cb.AWSIZE  <= txn.aw_size;
+    vif.mst_cb.AWBURST <= txn.aw_burst;
+    vif.mst_cb.AWPROT  <= txn.aw_prot;
 
-    wait ( vif.AWREADY );
-    @ ( posedge vif.ACLK );
+    wait ( vif.mst_cb.AWREADY );
+    @ ( posedge vif.mst_cb.ACLK );
     reset_aw_signal();
 endtask : drive_aw_txn
 
 task axi_master_bfm::drive_w_txn ( input axi_seq_item txn );
     for ( int i=0; i<=txn.aw_len; i++ ) begin
-        vif.WVALID <= 1;
-        vif.WID    <= txn.w_id;
-        vif.WDATA  <= txn.w_data[i];
-        vif.WSTRB  <= txn.w_strb[i];
+        vif.mst_cb.WVALID <= 1;
+        vif.mst_cb.WID    <= txn.w_id;
+        vif.mst_cb.WDATA  <= txn.w_data[i];
+        vif.mst_cb.WSTRB  <= txn.w_strb[i];
 
         if ( i==txn.aw_len ) begin
-            vif.WLAST <= 1;
+            vif.mst_cb.WLAST <= 1;
         end else begin
-            vif.WLAST <= 0;
+            vif.mst_cb.WLAST <= 0;
         end
 
-        wait ( vif.WREADY );
-        @ ( posedge vif.ACLK );
+        wait ( vif.mst_cb.WREADY );
+        @ ( posedge vif.mst_cb.ACLK );
         reset_w_signal();
     end
 endtask : drive_w_txn
 
 task axi_master_bfm::drive_b_txn ( input axi_seq_item txn );
-    // @ ( posedge vif.ACLK );
-    wait ( vif.BVALID );
-    @ ( posedge vif.ACLK );
-    vif.BREADY <= 0;
+    // @ ( posedge vif.mst_cb.ACLK );
+    wait ( vif.mst_cb.BVALID );
+    @ ( posedge vif.mst_cb.ACLK );
+    vif.mst_cb.BREADY <= 0;
     #1;  // Simulate Delay
     reset_b_signal();
 endtask : drive_b_txn
 
 task axi_master_bfm::drive_ar_txn ( input axi_seq_item txn );
-    vif.ARVALID <= 1;
-    vif.ARID    <= txn.ar_id;
-    vif.ARADDR  <= txn.ar_addr;
-    vif.ARLEN   <= txn.ar_len;
-    vif.ARSIZE  <= txn.ar_size;
-    vif.ARBURST <= txn.ar_burst;
-    vif.ARPROT  <= txn.ar_prot;
+    vif.mst_cb.ARVALID <= 1;
+    vif.mst_cb.ARID    <= txn.ar_id;
+    vif.mst_cb.ARADDR  <= txn.ar_addr;
+    vif.mst_cb.ARLEN   <= txn.ar_len;
+    vif.mst_cb.ARSIZE  <= txn.ar_size;
+    vif.mst_cb.ARBURST <= txn.ar_burst;
+    vif.mst_cb.ARPROT  <= txn.ar_prot;
 
-    @ ( posedge vif.ACLK );
-    wait ( vif.ARREADY );
+    @ ( posedge vif.mst_cb.ACLK );
+    wait ( vif.mst_cb.ARREADY );
 
-    @ ( posedge vif.ACLK );
+    @ ( posedge vif.mst_cb.ACLK );
     reset_ar_signal();
 endtask : drive_ar_txn
 
 task axi_master_bfm::drive_r_txn ( input axi_seq_item txn );
-    vif.RREADY <= 1;
-    @ ( posedge vif.ACLK );
-    wait ( vif.RVALID );
+    vif.mst_cb.RREADY <= 1;
+    @ ( posedge vif.mst_cb.ACLK );
+    wait ( vif.mst_cb.RVALID );
 
-    @ ( posedge vif.ACLK );
+    @ ( posedge vif.mst_cb.ACLK );
     reset_r_signal();
 endtask : drive_r_txn
 
 task axi_master_bfm::reset_aw_signal();
-    vif.AWID    <= 0;
-    vif.AWADDR  <= 0;
-    vif.AWLEN   <= 0;
-    vif.AWSIZE  <= 0;
-    vif.AWBURST <= 0;
-    vif.AWPROT  <= 0;
-    vif.AWVALID <= 0;
+    vif.mst_cb.AWID    <= 0;
+    vif.mst_cb.AWADDR  <= 0;
+    vif.mst_cb.AWLEN   <= 0;
+    vif.mst_cb.AWSIZE  <= 0;
+    vif.mst_cb.AWBURST <= 0;
+    vif.mst_cb.AWPROT  <= 0;
+    vif.mst_cb.AWVALID <= 0;
 endtask : reset_aw_signal
 
 task axi_master_bfm::reset_w_signal();
-    vif.WID     <= 0;
-    vif.WDATA   <= 0;
-    vif.WSTRB   <= 0;
-    vif.WLAST   <= 0;
-    vif.WVALID  <= 0;
+    vif.mst_cb.WID     <= 0;
+    vif.mst_cb.WDATA   <= 0;
+    vif.mst_cb.WSTRB   <= 0;
+    vif.mst_cb.WLAST   <= 0;
+    vif.mst_cb.WVALID  <= 0;
 endtask : reset_w_signal
 
 task axi_master_bfm::reset_b_signal();
-    vif.BREADY  <= 1;
+    vif.mst_cb.BREADY  <= 1;
 endtask : reset_b_signal
 
 task axi_master_bfm::reset_ar_signal();
-    vif.ARID    <= 0;
-    vif.ARADDR  <= 0;
-    vif.ARLEN   <= 0;
-    vif.ARSIZE  <= 0;
-    vif.ARBURST <= 0;
-    vif.ARPROT  <= 0;
-    vif.ARVALID <= 0;
+    vif.mst_cb.ARID    <= 0;
+    vif.mst_cb.ARADDR  <= 0;
+    vif.mst_cb.ARLEN   <= 0;
+    vif.mst_cb.ARSIZE  <= 0;
+    vif.mst_cb.ARBURST <= 0;
+    vif.mst_cb.ARPROT  <= 0;
+    vif.mst_cb.ARVALID <= 0;
 endtask : reset_ar_signal
 
 task axi_master_bfm::reset_r_signal();
-    vif.RREADY  <= 1;
+    vif.mst_cb.RREADY  <= 1;
 endtask : reset_r_signal
 
 task axi_master_bfm::reset_axi_signal();
