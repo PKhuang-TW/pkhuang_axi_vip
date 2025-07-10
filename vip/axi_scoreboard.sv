@@ -28,24 +28,23 @@ class axi_scoreboard extends uvm_scoreboard;
                 `uvm_info("SCB", "Handle AW Signal", UVM_HIGH)
                 mem_model.process_id_info_map (
                     .op(WRITE),
-                    .id(txn.aw_id),
-                    .burst_type(txn.aw_burst),
                     .addr(txn.aw_addr),
+                    .id(txn.aw_id),
                     .len(txn.aw_len),
-                    .size(txn.aw_size)
+                    .size(txn.aw_size),
+                    .burst(txn.aw_burst),
+                    .prot(txn.aw_prot)
                 );
             end
 
             W_TXN: begin
-                for ( int i=0; i<txn.w_data.size(); i++ ) begin
-                    `uvm_info("SCB", "Handle W Signal", UVM_HIGH)
-                    mem_model.process_w_op (
-                        .id(txn.w_id),
-                        .data(txn.w_data[i]),
-                        .strb(txn.w_strb[i]),
-                        .last( i==txn.w_data.size()-1 ? 1 : 0 )
-                    );
-                end
+                `uvm_info("SCB", "Handle W Signal", UVM_HIGH)
+                mem_model.process_w_op (
+                    .id(txn.w_id),
+                    .data(txn.w_data[0]),
+                    .strb(txn.w_strb[0]),
+                    .last(txn.w_last)
+                );
             end
 
             B_TXN: begin
@@ -72,11 +71,12 @@ class axi_scoreboard extends uvm_scoreboard;
                 `uvm_info("SCB", "Handle AR Signal", UVM_HIGH)
                 mem_model.process_id_info_map (
                     .op(READ),
-                    .id(txn.ar_id),
-                    .burst_type( burst_type_e'(txn.ar_burst) ),
                     .addr(txn.ar_addr),
+                    .id(txn.ar_id),
                     .len(txn.ar_len),
-                    .size(txn.ar_size)
+                    .size(txn.ar_size),
+                    .burst( burst_type_e'(txn.ar_burst) ),
+                    .prot(txn.ar_prot)
                 );
             end
 
