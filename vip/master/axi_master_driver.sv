@@ -58,6 +58,12 @@ task axi_master_driver::wait_clk ( int cycle );
     @ ( vif.mst_cb );
 endtask
 
+task axi_master_driver::send_rsp_2_seq ( axi_seq_item txn );
+    axi_seq_item    rsp;
+    $cast ( rsp, txn.clone() );
+    rsp.set_id_info(txn);
+    seq_item_port.put_response(rsp);
+endtask
 
 task axi_master_driver::get_txn();
     axi_seq_item    txn;
@@ -164,6 +170,9 @@ task axi_master_driver::drive_b_txn();
 
         wait_clk(1);
         reset_b_signal();
+
+        txn.kind = B_TXN;
+        send_rsp_2_seq(txn);
     end
 endtask : drive_b_txn
 
@@ -206,6 +215,9 @@ task axi_master_driver::drive_r_txn();
 
         wait_clk(1);
         reset_r_signal();
+        
+        txn.kind = R_TXN;
+        send_rsp_2_seq(txn);
     end
 endtask : drive_r_txn
 
