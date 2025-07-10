@@ -6,6 +6,8 @@ class axi_slave_bfm;
     axi_mem_model           mem_model;
     virtual axi_if.slv_if   vif;
 
+    bit[`D_ID_WIDTH-1:0]    w_q[$], b_q[$], r_q[$];
+
     function new ( virtual axi_if.slv_if vif );
         this.vif = vif;
         mem_model = new("mem_model");
@@ -36,11 +38,12 @@ task axi_slave_bfm::aw_signal_handler();
         vif.slv_cb.AWREADY <= 0;
         mem_model.process_id_info_map (
             .op(WRITE),
-            .id(vif.slv_cb.AWID),
-            .burst_type( burst_type_e'(vif.slv_cb.AWBURST) ),
             .addr(vif.slv_cb.AWADDR),
+            .id(vif.slv_cb.AWID),
             .len(vif.slv_cb.AWLEN),
-            .size(vif.slv_cb.AWSIZE)
+            .size(vif.slv_cb.AWSIZE),
+            .burst( burst_type_e'(vif.slv_cb.AWBURST) ),
+            .prot(vif.slv_cb.AWPROT)
         );
 
         #1;  // Simulate Delay
@@ -62,7 +65,7 @@ task axi_slave_bfm::w_signal_handler();
             .last(vif.slv_cb.WLAST)
         );
 
-        #1step;  // Simulate Delay
+        #1;  // Simulate Delay
         @ ( vif.slv_cb );
         reset_w_signal();
     end
@@ -94,22 +97,23 @@ endtask : b_signal_handler
 
 task axi_slave_bfm::ar_signal_handler();
     forever begin
-        @ ( vif.slv_cb );
         wait ( vif.slv_cb.ARVALID );
-
         `uvm_info("SLV_BFM", "Handle AR Signal", UVM_HIGH)
+
         mem_model.process_id_info_map (
             .op(READ),
             .id(vif.slv_cb.ARID),
-            .burst_type( burst_type_e'(vif.slv_cb.ARBURST) ),
             .addr(vif.slv_cb.ARADDR),
             .len(vif.slv_cb.ARLEN),
-            .size(vif.slv_cb.ARSIZE)
+            .size(vif.slv_cb.ARSIZE),
+            .burst( burst_type_e'(vif.slv_cb.ARBURST) ),
+            .prot(vif.slv_cb.ARPROT)
         );
 
-        // @ ( vif.slv_cb );
+        r_q.push_back(vif.slv_cb.ARID);
+
         vif.slv_cb.ARREADY <= 0;
-        #1;  // Simulate Delay
+        @ ( vif.slv_cb );
         reset_ar_signal();
     end
 endtask : ar_signal_handler
@@ -120,42 +124,41 @@ task axi_slave_bfm::r_signal_handler();
     bit [`D_DATA_WIDTH-1:0]  data;
 
     forever begin
-        @ ( vif.slv_cb );
-        if ( mem_model.r_id_info_map.id.size() > 0 ) begin
-            id = mem_model.r_id_info_map.id[0];
-            len = mem_model.r_id_info_map.len[id];
+        // @ ( vif.slv_cb );
 
-            `uvm_info(
-                "r_signal_handler",
-                $sformatf("Handle R Signal: ID=0x%h, len=0x%h", id, len),
-                UVM_HIGH
-            )
-            for ( int i=0; i<=len; i++) begin
-                mem_model.process_r_op (
-                    .id(id),
-                    .data(data)
+        while ( !r_q.size() ) @ ( vif.slv_cb );
+        
+        id = r_q.pop_front();
+        len = mem_model.r_id_info_map.len[id];
+
+        `uvm_info(
+            "r_signal_handler",
+            $sformatf("Handle R Signal: ID=0x%h, len=0x%h", id, len),
+            UVM_HIGH
+        )
+        for ( int i=0; i<=len; i++) begin
+            mem_model.process_r_op (
+                .id(id),
+                .data(data)
+            );
+            vif.slv_cb.RID     <= id;
+            vif.slv_cb.RDATA   <= data;
+            vif.slv_cb.RRESP   <= RSP_OKAY;  // default ok
+
+            if ( i==len ) begin
+                vif.slv_cb.RLAST <= 1;
+                mem_model.clr_id_info (
+                    .op(READ),
+                    .id(id)
                 );
-                vif.slv_cb.RID     <= id;
-                vif.slv_cb.RDATA   <= data;
-                vif.slv_cb.RRESP   <= RSP_OKAY;  // default ok
-
-                if ( i==len ) begin
-                    vif.slv_cb.RLAST <= 1;
-                    mem_model.clr_id_info (
-                        .op(READ),
-                        .id(id)
-                    );
-                end else begin
-                    vif.slv_cb.RLAST <= 0;
-                end
-                vif.slv_cb.RVALID  <= 1;
-
-                @ ( vif.slv_cb );
-                wait ( vif.slv_cb.RREADY );
-
-                @ ( vif.slv_cb );
-                reset_r_signal();
+            end else begin
+                vif.slv_cb.RLAST <= 0;
             end
+            vif.slv_cb.RVALID  <= 1;
+
+            @ ( vif.slv_cb );
+            wait ( vif.slv_cb.RREADY );
+            reset_r_signal();
         end
     end
 endtask : r_signal_handler
@@ -205,7 +208,7 @@ task axi_slave_bfm::reset_r_signal();
         vif.slv_cb.RRESP   <= 0;
         vif.slv_cb.RLAST   <= 0;
         vif.slv_cb.RVALID  <= 0;
-        // @ ( vif.slv_cb );
+        @ ( vif.slv_cb );
     end
 endtask : reset_r_signal
 
