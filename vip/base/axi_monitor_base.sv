@@ -21,6 +21,11 @@ class axi_monitor_base extends uvm_monitor;
             `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
     
+    task wait_clk ( int cycle );
+        #1;  // simulate delay to trigger mon_cb
+        @ ( vif.mon_cb );
+    endtask
+    
 endclass
 
 `endif

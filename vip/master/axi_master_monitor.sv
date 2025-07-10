@@ -14,16 +14,16 @@ class axi_master_monitor extends axi_monitor_base;
 
     virtual task run_phase (uvm_phase phase);
         fork
-            monitor_aw_channel();
-            monitor_w_channel();
-            monitor_b_channel();
-            monitor_ar_channel();
-            monitor_r_channel();
-        join_none
+            forever begin monitor_aw_channel()  ;end
+            forever begin monitor_w_channel()   ;end
+            forever begin monitor_b_channel()   ;end
+            forever begin monitor_ar_channel()  ;end
+            forever begin monitor_r_channel()   ;end
+        join
     endtask
 
     virtual task monitor_aw_channel();
-        forever begin
+        begin
             @ ( posedge vif.mon_cb.AWVALID );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind        = AW_TXN;
@@ -40,9 +40,10 @@ class axi_master_monitor extends axi_monitor_base;
     virtual task monitor_w_channel();
         bit[`D_ID_WIDTH-1:0]    id;
 
-        forever begin
-            wait ( vif.mon_cb.WVALID );
+        begin
+            @ ( posedge vif.mon_cb.WVALID );
             txn = axi_seq_item :: type_id :: create("txn");
+            
             id = vif.mon_cb.WID;
             do begin
                 if ( vif.mon_cb.WID == id ) begin
@@ -57,15 +58,21 @@ class axi_master_monitor extends axi_monitor_base;
                         $sformatf("ID=0x%h, Data=0x%h, Strb='b%b, Last=%0d", txn.w_id, vif.mon_cb.WDATA, vif.mon_cb.WSTRB, txn.w_last),
                         UVM_DEBUG
                     )
+                end else begin
+                    `uvm_error (
+                        "MON",
+                        $sformatf("Expected WID = 0x%h while actually WID = 0x%h", id, vif.mon_cb.WID)
+                    )
+                    break;
                 end
-                @ ( vif.mon_cb );
+                wait_clk(1);
             end while ( !vif.mon_cb.WLAST );
             ap.write(txn);
         end
     endtask : monitor_w_channel
 
     virtual task monitor_b_channel();
-        forever begin
+        begin
             @ ( posedge vif.mon_cb.BVALID );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = B_TXN;
@@ -76,7 +83,7 @@ class axi_master_monitor extends axi_monitor_base;
     endtask : monitor_b_channel
 
     virtual task monitor_ar_channel();
-        forever begin
+        begin
             @ ( posedge vif.mon_cb.ARVALID );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind        = AR_TXN;
@@ -93,9 +100,10 @@ class axi_master_monitor extends axi_monitor_base;
     virtual task monitor_r_channel();
         bit[`D_ID_WIDTH-1:0]    id;
 
-        forever begin
+        begin
             @ ( posedge vif.mon_cb.RVALID );
             txn = axi_seq_item :: type_id :: create("txn");
+
             id = vif.mon_cb.RID;
             do begin
                 if ( vif.mon_cb.RID == id ) begin
@@ -107,11 +115,17 @@ class axi_master_monitor extends axi_monitor_base;
 
                     `uvm_info(
                         "monitor_r_channel",
-                        $sformatf("ID=0x%h, Data=0x%h, Last=%0d", txn.r_id, vif.mon_cb.RDATA, txn.w_last),
+                        $sformatf("ID=0x%h, Data=0x%h, Last=%0d", txn.r_id, vif.mon_cb.RDATA, txn.r_last),
                         UVM_DEBUG
                     )
+                end else begin
+                    `uvm_error (
+                        "MON",
+                        $sformatf("Expected RID = 0x%h while actually RID = 0x%h", id, vif.mon_cb.RID)
+                    )
+                    break;
                 end
-                @ ( vif.mon_cb );
+                wait_clk(1);
             end while ( !vif.mon_cb.RLAST );
             ap.write(txn);
         end
