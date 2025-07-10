@@ -12,13 +12,14 @@ Both passive and active agents are supported, and optional Bus Functional Models
 
 - [x] Full AXI4 protocol support (AW, W, B, AR, R channels)
 - [x] Burst types: FIXED, INCR, WRAP
-- [x] Support for outstanding transactions by ID
-- [ ] Loopback testbench for functional regression
 - [x] AXI memory model for slave responses
 - [x] Configurable data/addr widths via `axi_define.svh`
-- [ ] Built-in SystemVerilog Assertions (SVA) for protocol timing
+- [x] Support for outstanding transactions by ID
+- [ ] Interleaved read transactions on R channel (multiple IDs, out-of-order)
 - [ ] UVM scoreboard and functional coverage
-- [ ] Supports both UVM test + standalone BFM test (without UVM)
+- [ ] Built-in SystemVerilog Assertions (SVA) for protocol timing
+- [ ] Loopback test support
+- [ ] Supports both Master and Slave VIP modes
 
 ---
 
@@ -78,13 +79,15 @@ Use slave VIP to respond to a DUT master, with stimulus monitored via passive ag
 pkhuang_axi_vip/
 |
 ├── seq/
-│   └── axi_aw_seq.sv
+│   ├── axi_aw_seq.sv
+│   └── axi_rand_rw_seq.sv
 │
 ├── tb/
 │   └── sim_top.sv
 │
 ├── test/
-│   └── axi_basic_test.sv
+│   ├── axi_basic_test.sv
+│   └── axi_rand_rw_test.sv
 │
 ├── vip/
 │   ├── base/
@@ -102,17 +105,23 @@ pkhuang_axi_vip/
 │   │   ├── axi_master_driver.sv
 │   │   └── axi_master_monitor.sv
 │   │
+│   ├── mem_model/
+│   │   ├── axi_id_info_map.sv
+│   │   └── axi_mem_model.sv
+│   │
+│   ├── package/
+│   │   └── axi_vip_pkg.svh
+│   │
 │   ├── slave/
 │   │   ├── axi_slave_agent.sv
 │   │   ├── axi_slave_bfm.sv
 │   │   ├── axi_slave_driver.sv
-│   │   ├── axi_slave_mem_model.sv
 │   │   └── axi_slave_monitor.sv
 │   │
 │   ├── axi_env.sv
 │   ├── axi_if.sv
-│   ├── axi_seq_item.sv
-│   └── axi_vip_pkg.sv
+│   ├── axi_scoreboard.sv
+│   └── axi_seq_item.sv
 │
 └── README.md
 
