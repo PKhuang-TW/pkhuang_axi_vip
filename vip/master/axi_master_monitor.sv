@@ -24,7 +24,7 @@ class axi_master_monitor extends axi_monitor_base;
 
     virtual task monitor_aw_channel();
         begin
-            @ ( posedge vif.mon_cb.AWVALID );
+            @ ( posedge vif.mon_cb.ACLK iff ( vif.mon_cb.AWVALID && vif.mon_cb.AWREADY ) );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind        = AW_TXN;
             txn.aw_id       = vif.mon_cb.AWID;
@@ -38,42 +38,45 @@ class axi_master_monitor extends axi_monitor_base;
     endtask : monitor_aw_channel
 
     virtual task monitor_w_channel();
-        bit [`D_ID_WIDTH-1:0]    id;
+        bit[`D_ID_WIDTH-1:0]    id;
 
         begin
-            @ ( posedge vif.mon_cb.WVALID );
+            @ ( posedge vif.mon_cb.ACLK iff ( vif.mon_cb.WVALID && vif.mon_cb.WREADY ) );
             txn = axi_seq_item :: type_id :: create("txn");
             
-            id = vif.mon_cb.WID;
-            do begin
-                if ( vif.mon_cb.WID == id ) begin
-                    txn.kind    = W_TXN;
-                    txn.w_id    <= vif.mon_cb.WID;
-                    txn.w_data.push_back ( vif.mon_cb.WDATA );
-                    txn.w_strb.push_back ( vif.mon_cb.WSTRB );
-                    txn.w_last = vif.mon_cb.WLAST;
+            txn.kind    = W_TXN;
+            txn.w_id = vif.mon_cb.WID;
 
-                    `uvm_info(
-                        "monitor_w_channel",
-                        $sformatf("ID=0x%h, Data=0x%h, Strb='b%b, Last=%0d", txn.w_id, vif.mon_cb.WDATA, vif.mon_cb.WSTRB, txn.w_last),
-                        UVM_DEBUG
-                    )
-                end else begin
-                    `uvm_error (
-                        "MON",
-                        $sformatf("Expected WID = 0x%h while actually WID = 0x%h", id, vif.mon_cb.WID)
-                    )
-                    break;
+            forever begin
+                if ( vif.mon_cb.WVALID ) begin
+                    if ( vif.mon_cb.WID != txn.w_id ) begin
+                        `uvm_error (
+                            "monitor_w_channel",
+                            $sformatf("Expected WID = 0x%h while actual WID = 0x%h", txn.w_id, vif.mon_cb.WID)
+                        )
+                    end else begin
+                        `uvm_info(
+                            "monitor_w_channel",
+                            $sformatf("ID=0x%h, Data=0x%h, Strb='b%b, Last=%0d", txn.w_id, vif.mon_cb.WDATA, vif.mon_cb.WSTRB, vif.mon_cb.WLAST),
+                            UVM_DEBUG
+                        )
+                        txn.w_data.push_back ( vif.mon_cb.WDATA );
+                        txn.w_strb.push_back ( vif.mon_cb.WSTRB );
+                        if ( vif.mon_cb.WLAST ) break;
+                    end
                 end
                 wait_clk(1);
-            end while ( !vif.mon_cb.WLAST );
+            end
+
+            txn.w_last  = 1;
             ap.write(txn);
+            wait_clk(1);
         end
     endtask : monitor_w_channel
 
     virtual task monitor_b_channel();
         begin
-            @ ( posedge vif.mon_cb.BVALID );
+            @ ( posedge vif.mon_cb.ACLK iff ( vif.mon_cb.BVALID && vif.mon_cb.BREADY ) );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind    = B_TXN;
             txn.b_id    = vif.mon_cb.BID;
@@ -84,7 +87,7 @@ class axi_master_monitor extends axi_monitor_base;
 
     virtual task monitor_ar_channel();
         begin
-            @ ( posedge vif.mon_cb.ARVALID );
+            @ ( posedge vif.mon_cb.ACLK iff ( vif.mon_cb.ARVALID && vif.mon_cb.ARREADY ) );
             txn = axi_seq_item :: type_id :: create("txn");
             txn.kind        = AR_TXN;
             txn.ar_id       = vif.mon_cb.ARID;
@@ -101,33 +104,36 @@ class axi_master_monitor extends axi_monitor_base;
         bit[`D_ID_WIDTH-1:0]    id;
 
         begin
-            @ ( posedge vif.mon_cb.RVALID );
+            @ ( posedge vif.mon_cb.ACLK iff ( vif.mon_cb.RVALID && vif.mon_cb.RREADY ) );
             txn = axi_seq_item :: type_id :: create("txn");
+            
+            txn.kind    = R_TXN;
+            txn.r_id    = vif.mon_cb.RID;
 
-            id = vif.mon_cb.RID;
-            do begin
-                if ( vif.mon_cb.RID == id ) begin
-                    txn.kind    = R_TXN;
-                    txn.r_id    = vif.mon_cb.RID;
-                    txn.r_data.push_back ( vif.mon_cb.RDATA );
-                    txn.r_resp.push_back ( rsp_e'(vif.mon_cb.RRESP) );
-                    txn.r_last  = vif.mon_cb.RLAST;
-
-                    `uvm_info(
-                        "monitor_r_channel",
-                        $sformatf("ID=0x%h, Data=0x%h, Last=%0d", txn.r_id, vif.mon_cb.RDATA, txn.r_last),
-                        UVM_DEBUG
-                    )
-                end else begin
-                    `uvm_error (
-                        "MON",
-                        $sformatf("Expected RID = 0x%h while actually RID = 0x%h", id, vif.mon_cb.RID)
-                    )
-                    break;
+            forever begin
+                if ( vif.mon_cb.RVALID ) begin
+                    if ( vif.mon_cb.RID != txn.r_id ) begin
+                        `uvm_error (
+                            "monitor_r_channel",
+                            $sformatf("Expected RID = 0x%h while actual RID = 0x%h", txn.r_id, vif.mon_cb.RID)
+                        )
+                    end else begin
+                        `uvm_info(
+                            "monitor_r_channel",
+                            $sformatf("ID=0x%h, Data=0x%h, Last=%0d", txn.r_id, vif.mon_cb.RDATA, txn.r_last),
+                            UVM_DEBUG
+                        )
+                        txn.r_data.push_back ( vif.mon_cb.RDATA );
+                        txn.r_resp.push_back ( rsp_e'(vif.mon_cb.RRESP) );
+                        if ( vif.mon_cb.RLAST ) break;
+                    end
                 end
                 wait_clk(1);
-            end while ( !vif.mon_cb.RLAST );
+            end
+
+            txn.r_last = 1;
             ap.write(txn);
+            wait_clk(1);
         end
     endtask : monitor_r_channel
 
