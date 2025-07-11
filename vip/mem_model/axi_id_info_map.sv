@@ -9,7 +9,7 @@ class axi_id_info_map;
     bit [2:0]                       size [bit [`D_ID_WIDTH-1:0]];
     burst_type_e                    burst [bit [`D_ID_WIDTH-1:0]];
     prot_s                          prot [bit [`D_ID_WIDTH-1:0]];
-    bit [`D_MEM_ADDR_WIDTH-1:0]     addr_q [bit [`D_ID_WIDTH-1:0]][$];
+    bit [`D_ADDR_WIDTH-1:0]         addr_q [bit [`D_ID_WIDTH-1:0]][$];
     bit [`D_DATA_WIDTH-1:0]         data_q [bit [`D_ID_WIDTH-1:0]][$];
     bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [bit [`D_ID_WIDTH-1:0]][$];
     bit                             ready [bit [`D_ID_WIDTH-1:0]];
@@ -36,13 +36,13 @@ class axi_id_info_map;
 
         case ( burst )
             BURST_TYPE_FIXED: begin
-                for ( int i=0; i<=len; i++) begin
+                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
                     this.addr_q[id].push_back(addr);
                 end
             end
 
             BURST_TYPE_INCR: begin
-                for ( int i=0; i<=len; i++) begin
+                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
                     this.addr_q[id].push_back( addr + (i * (1 << size)) );
                 end
             end
@@ -50,7 +50,7 @@ class axi_id_info_map;
             BURST_TYPE_WRAP: begin
                 total_size      = ( len + 1 ) * ( 1 << size );
                 wrap_boundary   = ( addr / total_size ) * total_size;
-                for ( int i=0; i<=len; i++) begin
+                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
                     this.addr_q[id].push_back(
                         ( addr - wrap_boundary + i * (1<<size) ) % total_size
                     );

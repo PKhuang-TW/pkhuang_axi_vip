@@ -112,8 +112,8 @@ class axi_seq_item extends uvm_sequence_item;
     }
 
     constraint c_mem_overflow {
-        aw_addr inside { [0:`D_MEM_SIZE] };
-        ar_addr inside { [0:`D_MEM_SIZE] };
+        aw_addr inside { [0:`D_MEM_SIZE-1] };
+        ar_addr inside { [0:`D_MEM_SIZE-1] };
     }
 
     function new(string name = "axi_seq_item");

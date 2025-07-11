@@ -130,7 +130,7 @@ class axi_mem_model extends uvm_object;
         size = w_id_info_map.size[id];
         addr = w_id_info_map.addr_q[id].pop_front();
 
-        for ( int i=0; i<(1 << size); i++ ) begin
+        for ( [`D_ADDR_WIDTH-1:0] i=0; i<(1 << size); i++ ) begin
             if ( (strb >> i) & 1'b1 ) begin
                 mem[addr + i] = data[7+8*i -: 8];
 
