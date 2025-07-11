@@ -60,6 +60,7 @@ class axi_rand_rw_seq extends uvm_sequence #(axi_seq_item);
                 end
             end
         join
+        `uvm_info ( "SEQ", "Sequence Done!", UVM_LOW )
     endtask
 
     virtual function void rand_txn();

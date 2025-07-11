@@ -38,7 +38,7 @@ class axi_master_monitor extends axi_monitor_base;
     endtask : monitor_aw_channel
 
     virtual task monitor_w_channel();
-        bit[`D_ID_WIDTH-1:0]    id;
+        bit [`D_ID_WIDTH-1:0]    id;
 
         begin
             @ ( posedge vif.mon_cb.WVALID );
@@ -48,7 +48,7 @@ class axi_master_monitor extends axi_monitor_base;
             do begin
                 if ( vif.mon_cb.WID == id ) begin
                     txn.kind    = W_TXN;
-                    txn.w_id    = vif.mon_cb.WID;
+                    txn.w_id    <= vif.mon_cb.WID;
                     txn.w_data.push_back ( vif.mon_cb.WDATA );
                     txn.w_strb.push_back ( vif.mon_cb.WSTRB );
                     txn.w_last = vif.mon_cb.WLAST;

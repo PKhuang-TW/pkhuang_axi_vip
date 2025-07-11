@@ -47,77 +47,6 @@ class axi_mem_model extends uvm_object;
         end
     endfunction
 
-    // virtual function void process_id_info_map (
-    //     operation_e                     op,
-    //     bit[`D_ID_WIDTH-1:0]            id,
-    //     burst_type_e                    burst_type,
-    //     bit[`D_ADDR_WIDTH-1:0]          addr,
-    //     bit[7:0]                        len,
-    //     bit[2:0]                        size,
-    //     bit [`D_DATA_WIDTH-1:0]         data_q [$] = '{},
-    //     bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{}
-    // );
-    //     axi_id_info_map                 id_info;
-    //     bit [`D_MEM_ADDR_WIDTH-1:0]     addr_q [$]
-
-    //     bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
-    //     bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
-
-    //     if ( op == WRITE ) begin
-    //         id_info = w_id_info_map;
-    //     end else if ( op == READ ) begin
-    //         id_info = r_id_info_map;
-    //     end
-
-    //     // id_info.id.push_back(id);
-    //     // id_info.len[id]         = len;
-    //     // id_info.size[id]        = size;
-    //     // id_info.complete[id]    = 0;
-
-    //     case ( burst_type )
-    //         BURST_TYPE_FIXED: begin
-    //             for ( int i=0; i<=len; i++) begin
-    //                 addr_q.push_back(addr);
-    //             end
-    //         end
-
-    //         BURST_TYPE_INCR: begin
-    //             for ( int i=0; i<=len; i++) begin
-    //                 addr_q.push_back( addr + (i * (1 << size)) );
-    //             end
-    //         end
-
-    //         BURST_TYPE_WRAP: begin
-    //             total_size      = ( len + 1 ) * ( 1 << size );
-    //             wrap_boundary   = ( addr / total_size ) * total_size;
-    //             for ( int i=0; i<=len; i++) begin
-    //                 addr_q.push_back(
-    //                     ( addr - wrap_boundary + i * (1<<size) ) % total_size
-    //                 );
-    //             end
-    //         end
-
-    //         default: begin
-    //             `uvm_error ("ERROR", $sformatf("Unexpected TXN burst type! (%0d)", burst_type) )
-    //         end
-    //     endcase
-
-    //     id_info_map.set_id_info(
-    //         .id(id),
-    //         .len(len),
-    //         .size(size),
-    //         .addr_q(addr_q),
-    //         .data_q(data_q),
-    //         .strb_q(strb_q)
-    //     );
-
-    //     `uvm_info(
-    //         "process_id_info_map",
-    //         $sformatf("%s TXN, id = 0x%h, burst = %s, addr = 0x%h, len = %0d, size = %0d", op.name, id, burst_type.name, addr, len, size),
-    //         UVM_HIGH
-    //     )
-    // endfunction
-
     virtual function void process_w_op (
         bit [`D_ID_WIDTH-1:0]           id,
         bit [`D_DATA_WIDTH-1:0]         data,
@@ -137,6 +66,12 @@ class axi_mem_model extends uvm_object;
                 `uvm_info(
                     "process_w_op",
                     $sformatf("Write TXN ID=0x%h, write mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
+                    UVM_HIGH
+                )
+            end else begin
+                `uvm_info(
+                    "process_w_op",
+                    $sformatf("Write TXN ID=0x%h, write mem[0x%h] = 0x00 done!", id, (addr+i)),
                     UVM_HIGH
                 )
             end
@@ -167,10 +102,9 @@ class axi_mem_model extends uvm_object;
     );
         bit [2:0]                   size;
         bit[`D_ADDR_WIDTH-1:0]      addr;
-        bit[7:0]                    len;
 
-        size    = r_id_info_map.size[id];
-        addr    = r_id_info_map.addr_q[id].pop_front();
+        size = r_id_info_map.size[id];
+        addr = r_id_info_map.addr_q[id].pop_front();
 
         for ( int i=0; i<(1 << size); i++ ) begin
             data[7+8*i -: 8] = mem[addr + i];

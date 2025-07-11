@@ -63,33 +63,30 @@ task axi_master_driver::send_rsp_2_seq ( axi_seq_item txn );
     $cast ( rsp, txn.clone() );
     rsp.set_id_info(txn);
     seq_item_port.put_response(rsp);
+    `uvm_info ( "send_rsp_2_seq", "Response Sent!", UVM_LOW )
 endtask
 
 task axi_master_driver::get_txn();
     axi_seq_item    txn;
 
-    begin
+    if ( vif.mst_cb.ARESETn ) begin        
         txn = axi_seq_item :: type_id :: create ("txn");
         seq_item_port.get_next_item(txn);
-        // txn.print();
+
+        if ( txn.kind == AW_TXN ) begin
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, AWID = 0x%h", txn.kind.name(), txn.aw_id), UVM_HIGH )
+        end else if ( txn.kind == AR_TXN ) begin
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, ARID = 0x%h", txn.kind.name(), txn.ar_id), UVM_HIGH )
+        end
 
         case ( txn.kind )
-            AW_TXN: begin
-                aw_q.push_back(txn);
-                w_q.push_back(txn);
-                b_q.push_back(txn);
-            end
-
-            AR_TXN: begin
-                ar_q.push_back(txn);
-                r_q.push_back(txn);
-            end
-            
-            default: begin
-                `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()));
-            end
+            AW_TXN:     aw_q.push_back(txn);
+            AR_TXN:     ar_q.push_back(txn);            
+            default:    `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()))
         endcase
         seq_item_port.item_done();
+    end else begin
+        wait_clk(1);
     end
 endtask
 
@@ -100,9 +97,10 @@ task axi_master_driver::drive_aw_txn();
         while ( !aw_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
 
         txn = aw_q.pop_front();
+        w_q.push_back(txn);
 
         vif.mst_cb.AWID    <= txn.aw_id;
-        vif.mst_cb.AWADDR  <= txn.aw_addr[0];
+        vif.mst_cb.AWADDR  <= txn.aw_addr;
         vif.mst_cb.AWLEN   <= txn.aw_len;
         vif.mst_cb.AWSIZE  <= txn.aw_size;
         vif.mst_cb.AWBURST <= txn.aw_burst;
@@ -128,7 +126,7 @@ task axi_master_driver::drive_w_txn();
     begin
         while ( !w_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
 
-        // Support out-of-order write transfer
+        // Support outstanding write transfer
         q_idx = $urandom_range ( 0, w_q.size()-1 );
         txn = w_q[q_idx];
         w_q.delete(q_idx);
@@ -146,6 +144,7 @@ task axi_master_driver::drive_w_txn();
 
             if ( i == txn.aw_len ) begin
                 vif.mst_cb.WLAST <= 1;
+                b_q.push_back(txn);
             end else begin
                 vif.mst_cb.WLAST <= 0;
             end
@@ -165,7 +164,7 @@ task axi_master_driver::drive_b_txn();
         wait ( vif.mst_cb.BVALID );
 
         txn = b_q.pop_front();
-        txn.b_id = vif.mst_cb.BID;
+        txn.b_id <= vif.mst_cb.BID;
         vif.mst_cb.BREADY <= 0;
 
         wait_clk(1);
@@ -181,8 +180,9 @@ task axi_master_driver::drive_ar_txn ();
     
     begin
         while ( !ar_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
-        
+                
         txn = ar_q.pop_front();
+        r_q.push_back(txn);
         
         vif.mst_cb.ARID    <= txn.ar_id;
         vif.mst_cb.ARADDR  <= txn.ar_addr[0];
@@ -209,15 +209,17 @@ task axi_master_driver::drive_r_txn();
     
     begin
         wait ( vif.mst_cb.RVALID );
-        txn = r_q.pop_front();
-        txn.r_id = vif.mst_cb.RID;
         vif.mst_cb.RREADY  <= 0;
+
+        if ( vif.mst_cb.RLAST ) begin
+            txn = r_q.pop_front();
+            txn.kind = R_TXN;
+            txn.r_id = vif.mst_cb.RID;
+            send_rsp_2_seq(txn);
+        end
 
         wait_clk(1);
         reset_r_signal();
-        
-        txn.kind = R_TXN;
-        send_rsp_2_seq(txn);
     end
 endtask : drive_r_txn
 

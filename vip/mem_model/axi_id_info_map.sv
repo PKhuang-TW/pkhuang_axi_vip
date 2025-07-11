@@ -105,6 +105,18 @@ class axi_id_info_map;
         end
         return 0;
     endfunction
+
+    function int get_id_size();
+        return id.size();
+    endfunction
+
+    function bit [`D_ID_WIDTH-1:0] get_rand_id();
+        return id[$urandom_range(0, get_id_size()-1)];
+    endfunction
+
+    function int get_addr_q_size_by_id ( bit [`D_ID_WIDTH-1:0] id );
+        return addr_q[id].size();
+    endfunction
 endclass
 
 `endif
