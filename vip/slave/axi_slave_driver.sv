@@ -58,17 +58,16 @@ endtask
 
 task axi_slave_driver::aw_signal_handler();
     begin
-        @ ( posedge vif.slv_cb.AWVALID );
+        wait ( vif.slv_cb.AWVALID );
 
         `uvm_info (
             "aw_signal_handler",
             $sformatf("Handle AW Signal: ID = 0x%h", vif.slv_cb.AWID),
             UVM_HIGH
         )
-        mem_model.process_id_info_map (
-            .op(WRITE),
-            .addr(vif.slv_cb.AWADDR),
+        mem_model.w_id_info_map.set_id_info (
             .id(vif.slv_cb.AWID),
+            .addr(vif.slv_cb.AWADDR),
             .len(vif.slv_cb.AWLEN),
             .size(vif.slv_cb.AWSIZE),
             .burst( burst_type_e'(vif.slv_cb.AWBURST) ),
@@ -149,8 +148,7 @@ task axi_slave_driver::ar_signal_handler();
             UVM_HIGH
         )
 
-        mem_model.process_id_info_map (
-            .op(READ),
+        mem_model.r_id_info_map.set_id_info (
             .id(vif.slv_cb.ARID),
             .addr(vif.slv_cb.ARADDR),
             .len(vif.slv_cb.ARLEN),

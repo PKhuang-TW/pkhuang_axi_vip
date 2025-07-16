@@ -12,7 +12,6 @@ class axi_id_info_map;
     bit [`D_ADDR_WIDTH-1:0]         addr_q [bit [`D_ID_WIDTH-1:0]][$];
     bit [`D_DATA_WIDTH-1:0]         data_q [bit [`D_ID_WIDTH-1:0]][$];
     bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [bit [`D_ID_WIDTH-1:0]][$];
-    bit                             ready [bit [`D_ID_WIDTH-1:0]];
     bit                             complete [bit [`D_ID_WIDTH-1:0]];
 
     function void set_id_info (
@@ -22,8 +21,11 @@ class axi_id_info_map;
         bit [2:0]                       size,
         burst_type_e                    burst,
         prot_s                          prot = 0,
+
+        // ====== For Write ======
         bit [`D_DATA_WIDTH-1:0]         data_q [$] = '{},
-        bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{}
+        bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{},
+        bit                             complete = 0
     );
         bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
         bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
@@ -32,7 +34,6 @@ class axi_id_info_map;
         this.len[id]    = len;
         this.size[id]   = size;
         this.burst[id]  = burst;
-        this.ready[id]  = 0;
 
         case ( burst )
             BURST_TYPE_FIXED: begin
@@ -67,8 +68,7 @@ class axi_id_info_map;
             this.strb_q[id].push_back(strb_q[i]);
         end
 
-        this.ready[id]      = 1;
-        this.complete[id]   = 0;
+        this.complete[id]   = complete;
     endfunction
 
     function void clr_id_info (
@@ -89,8 +89,6 @@ class axi_id_info_map;
             this.data_q.delete(id);
         if ( this.strb_q.exists(id) )
             this.strb_q.delete(id);
-        if ( this.ready.exists(id) )
-            this.ready.delete(id);
         if ( this.complete.exists(id) )
             this.complete.delete(id);
     endfunction
@@ -116,6 +114,10 @@ class axi_id_info_map;
 
     function int get_addr_q_size_by_id ( bit [`D_ID_WIDTH-1:0] id );
         return addr_q[id].size();
+    endfunction
+
+    function bit [`D_ADDR_WIDTH-1:0] get_addr_by_id_idx ( bit [`D_ID_WIDTH-1:0] id, int idx );
+        return addr_q[id][idx];
     endfunction
 endclass
 

@@ -6,6 +6,7 @@ class axi_monitor_base extends uvm_monitor;
 
     axi_seq_item                        txn;
     virtual axi_if.mon_if               vif;
+    axi_seq_item                        txn_q[$];
 
     uvm_analysis_port #(axi_seq_item)   ap;
 

@@ -19,17 +19,15 @@ class axi_scoreboard extends uvm_scoreboard;
 
     virtual function void write ( axi_seq_item txn );
 
-        // R Channel
         bit[7:0]                    len;
         bit [`D_DATA_WIDTH-1:0]     data;
 
         case (txn.kind)
             AW_TXN: begin
                 `uvm_info("SCB", "Handle AW Signal", UVM_HIGH)
-                mem_model.process_id_info_map (
-                    .op(WRITE),
-                    .addr(txn.aw_addr),
+                mem_model.w_id_info_map.set_id_info (
                     .id(txn.aw_id),
+                    .addr(txn.aw_addr),
                     .len(txn.aw_len),
                     .size(txn.aw_size),
                     .burst(txn.aw_burst),
@@ -69,10 +67,9 @@ class axi_scoreboard extends uvm_scoreboard;
 
             AR_TXN: begin
                 `uvm_info("SCB", "Handle AR Signal", UVM_HIGH)
-                mem_model.process_id_info_map (
-                    .op(READ),
-                    .addr(txn.ar_addr),
+                mem_model.r_id_info_map.set_id_info (
                     .id(txn.ar_id),
+                    .addr(txn.ar_addr),
                     .len(txn.ar_len),
                     .size(txn.ar_size),
                     .burst( burst_type_e'(txn.ar_burst) ),
@@ -81,38 +78,30 @@ class axi_scoreboard extends uvm_scoreboard;
             end
 
             R_TXN: begin
-                if ( !mem_model.r_id_info_map.complete[txn.r_id] ) begin
+                if ( txn.r_resp[0] != RSP_OKAY ) begin  // default okay
                     `uvm_error(
                         "SCB",
-                        $sformatf("Read TXN (ID=%0d) is not ready for Response yet!", txn.r_id)
+                        $sformatf("Read TXN Resp = %s while expected RSP_OKAY", txn.r_resp[0])
                     )
                 end else begin
-                    for ( int i=0; i<txn.r_data.size(); i++ ) begin
+                    `uvm_info("SCB", "Handle R Signal", UVM_HIGH)
+                    mem_model.process_r_op (
+                        .id(txn.r_id),
+                        .data(data)
+                    );
 
-                        if ( txn.r_resp[i] != RSP_OKAY ) begin  // default okay
-                            `uvm_error(
-                                "SCB",
-                                $sformatf("Read TXN Resp = %s while expected RSP_OKAY", txn.r_resp[i])
-                            )
-                        end else begin
-                            `uvm_info("SCB", "Handle R Signal", UVM_HIGH)
-                            mem_model.process_r_op (
-                                .id(txn.r_id),
-                                .data(data)
-                            );
-
-                            if ( data != txn.r_data[i] ) begin
-                                `uvm_error(
-                                    "SCB",
-                                    $sformatf("Read Data = 0x%h when expected 0x%h", txn.r_data[i], data)
-                                )
-                            end else begin  // PASS
-                                mem_model.clr_id_info (
-                                    .op(READ),
-                                    .id(txn.r_id)
-                                );
-                            end
-                        end
+                    if ( data != txn.r_data[0] ) begin
+                        `uvm_error(
+                            "SCB",
+                            $sformatf("Read TXN (ID=0x%h), Read Data = 0x%h when expected 0x%h", txn.r_id, txn.r_data[0], data)
+                        )
+                    end
+                    
+                    if ( txn.r_last ) begin
+                        mem_model.clr_id_info (
+                            .op(READ),
+                            .id(txn.r_id)
+                        );
                     end
                 end
             end

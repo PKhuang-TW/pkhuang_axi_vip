@@ -12,11 +12,13 @@ Both passive and active agents are supported, and optional Bus Functional Models
 
 - [x] Full AXI4 protocol support (AW, W, B, AR, R channels)
 - [x] Burst types: FIXED, INCR, WRAP
-- [x] AXI memory model for slave responses
 - [x] Configurable data/addr widths via `axi_define.svh`
-- [x] Support for outstanding transactions by ID
-- [ ] Interleaved read transactions on R channel (multiple IDs, out-of-order)
-- [ ] UVM scoreboard and functional coverage
+- [x] AXI memory model for slave responses
+- [x] Support multiple IDs transfer
+- [x] Support request ordering ( W: Outstanding; R: Outstanding, Interleaving) 
+- [ ] Address tracker to prevent Read/Write race condition
+- [x] UVM scoreboard
+- [ ] Functional coverage
 - [ ] Built-in SystemVerilog Assertions (SVA) for protocol timing
 - [ ] Loopback test support
 - [ ] Supports both Master and Slave VIP modes

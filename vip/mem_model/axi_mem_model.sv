@@ -13,40 +13,6 @@ class axi_mem_model extends uvm_object;
         w_id_info_map = new();
     endfunction
 
-    virtual function void process_id_info_map (
-        operation_e                     op,
-        bit [`D_ADDR_WIDTH-1:0]         addr,
-        bit [`D_ID_WIDTH-1:0]           id,
-        bit [7:0]                       len,
-        bit [2:0]                       size,
-        burst_type_e                    burst,
-        prot_s                          prot = 0,
-        bit [`D_DATA_WIDTH-1:0]         data_q [$] = '{},
-        bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{}
-    );
-        if ( op == WRITE ) begin
-            w_id_info_map.set_id_info(
-                .id(id),
-                .addr(addr),
-                .len(len),
-                .size(size),
-                .burst(burst),
-                .prot(prot),
-                .data_q(data_q),
-                .strb_q(strb_q)
-            );
-        end else if ( op == READ ) begin
-            r_id_info_map.set_id_info(
-                .id(id),
-                .addr(addr),
-                .len(len),
-                .size(size),
-                .burst(burst),
-                .prot(prot)
-            );
-        end
-    endfunction
-
     virtual function void process_w_op (
         bit [`D_ID_WIDTH-1:0]           id,
         bit [`D_DATA_WIDTH-1:0]         data,
@@ -118,18 +84,19 @@ class axi_mem_model extends uvm_object;
     endfunction
 
     virtual function void clr_id_info (
-        operation_e             op,
-        bit [`D_ID_WIDTH-1:0]   id
+        operation_e                 op,
+        bit [`D_ID_WIDTH-1:0]       id
     );
-        axi_id_info_map     id_info;
+        bit [`D_ADDR_WIDTH-1:0]     start_addr;
+        axi_id_info_map             id_info_map;
 
         if ( op == WRITE ) begin
-            id_info = w_id_info_map;
+            id_info_map = w_id_info_map;
         end else if ( op == READ ) begin
-            id_info = r_id_info_map;
+            id_info_map = r_id_info_map;
         end
 
-        id_info.clr_id_info(id);
+        id_info_map.clr_id_info(id);
 
         `uvm_info(
             "clr_id_info",
