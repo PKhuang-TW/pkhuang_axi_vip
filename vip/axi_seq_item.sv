@@ -47,38 +47,8 @@ class axi_seq_item extends uvm_sequence_item;
 
     localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH / 8) : `D_MEM_SIZE;
 
-    `uvm_object_utils_begin(axi_seq_item)
-        `uvm_field_enum(txn_kind_e, kind, UVM_ALL_ON)
-        `uvm_field_int(aw_id, UVM_ALL_ON)
-        `uvm_field_int(aw_addr, UVM_ALL_ON)
-        `uvm_field_int(aw_len, UVM_ALL_ON)
-        `uvm_field_int(aw_size, UVM_ALL_ON)
-        `uvm_field_enum(burst_type_e, aw_burst, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.instruction, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.non_secure, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.privileged, UVM_ALL_ON)
-        `uvm_field_int(w_id, UVM_ALL_ON)
-        `uvm_field_queue_int(w_data, UVM_ALL_ON)
-        `uvm_field_queue_int(w_strb, UVM_ALL_ON)
-        `uvm_field_int(w_last, UVM_ALL_ON)
-        `uvm_field_int(b_id, UVM_ALL_ON)
-        `uvm_field_enum(rsp_e, b_resp, UVM_ALL_ON)
-        `uvm_field_enum(rsp_e, exp_b_resp, UVM_ALL_ON)
-        `uvm_field_int(ar_id, UVM_ALL_ON)
-        `uvm_field_int(ar_addr, UVM_ALL_ON)
-        `uvm_field_int(ar_len, UVM_ALL_ON)
-        `uvm_field_int(ar_size, UVM_ALL_ON)
-        `uvm_field_enum(burst_type_e, ar_burst, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.instruction, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.non_secure, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.privileged, UVM_ALL_ON)
-        `uvm_field_int(r_id, UVM_ALL_ON)
-        `uvm_field_queue_int(r_data, UVM_ALL_ON)
-        `uvm_field_int(r_last, UVM_ALL_ON)
-        `uvm_field_queue_enum(rsp_e, r_resp, UVM_ALL_ON)
-        `uvm_field_queue_enum(rsp_e, exp_r_resp, UVM_ALL_ON)
-    `uvm_object_utils_end
-
+    //-----------------------------------------------------------
+    
     constraint c_kind   { soft kind dist { 0:=1, 3:=1 }; }  // AW: 50%, AR: 50%
     constraint c_burst  { aw_burst <= BURST_TYPE_WRAP; ar_burst <= BURST_TYPE_WRAP; }
     constraint c_id     { aw_id == w_id; }
@@ -115,6 +85,38 @@ class axi_seq_item extends uvm_sequence_item;
         aw_addr inside { [0:`D_MEM_SIZE-1] };
         ar_addr inside { [0:`D_MEM_SIZE-1] };
     }
+
+    `uvm_object_utils_begin(axi_seq_item)
+        `uvm_field_enum(txn_kind_e, kind, UVM_ALL_ON)
+        `uvm_field_int(aw_id, UVM_ALL_ON)
+        `uvm_field_int(aw_addr, UVM_ALL_ON)
+        `uvm_field_int(aw_len, UVM_ALL_ON)
+        `uvm_field_int(aw_size, UVM_ALL_ON)
+        `uvm_field_enum(burst_type_e, aw_burst, UVM_ALL_ON)
+        `uvm_field_int(aw_prot.instruction, UVM_ALL_ON)
+        `uvm_field_int(aw_prot.non_secure, UVM_ALL_ON)
+        `uvm_field_int(aw_prot.privileged, UVM_ALL_ON)
+        `uvm_field_int(w_id, UVM_ALL_ON)
+        `uvm_field_queue_int(w_data, UVM_ALL_ON)
+        `uvm_field_queue_int(w_strb, UVM_ALL_ON)
+        `uvm_field_int(w_last, UVM_ALL_ON)
+        `uvm_field_int(b_id, UVM_ALL_ON)
+        `uvm_field_enum(rsp_e, b_resp, UVM_ALL_ON)
+        `uvm_field_enum(rsp_e, exp_b_resp, UVM_ALL_ON)
+        `uvm_field_int(ar_id, UVM_ALL_ON)
+        `uvm_field_int(ar_addr, UVM_ALL_ON)
+        `uvm_field_int(ar_len, UVM_ALL_ON)
+        `uvm_field_int(ar_size, UVM_ALL_ON)
+        `uvm_field_enum(burst_type_e, ar_burst, UVM_ALL_ON)
+        `uvm_field_int(ar_prot.instruction, UVM_ALL_ON)
+        `uvm_field_int(ar_prot.non_secure, UVM_ALL_ON)
+        `uvm_field_int(ar_prot.privileged, UVM_ALL_ON)
+        `uvm_field_int(r_id, UVM_ALL_ON)
+        `uvm_field_queue_int(r_data, UVM_ALL_ON)
+        `uvm_field_int(r_last, UVM_ALL_ON)
+        `uvm_field_queue_enum(rsp_e, r_resp, UVM_ALL_ON)
+        `uvm_field_queue_enum(rsp_e, exp_r_resp, UVM_ALL_ON)
+    `uvm_object_utils_end
 
     function new(string name = "axi_seq_item");
         super.new(name);

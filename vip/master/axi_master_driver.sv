@@ -4,8 +4,8 @@
 class axi_master_driver extends axi_driver_base;
     `uvm_component_utils(axi_master_driver)
 
-    virtual axi_if.mst_if       vif;
-    axi_seq_item                aw_q[$], w_q[$], b_q[$], ar_q[$], r_q[$];
+    virtual `D_MST_IF       vif;
+    axi_seq_item            aw_q[$], w_q[$], b_q[$], ar_q[$], r_q[$];
 
     function new ( string name = "axi_master_driver", uvm_component parent );
         super.new(name, parent);
@@ -14,7 +14,7 @@ class axi_master_driver extends axi_driver_base;
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if ( !uvm_config_db #(virtual axi_if.mst_if) :: get (this, "", "vif.mst_if", vif) )
+        if ( !uvm_config_db #(virtual `D_MST_IF) :: get (this, "", "vif.mst_if", vif) )
             `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
 
@@ -54,8 +54,7 @@ class axi_master_driver extends axi_driver_base;
 endclass : axi_master_driver
 
 task axi_master_driver::wait_clk ( int cycle );
-    #1;  // simulate delay to trigger mst_cb
-    @ ( vif.mst_cb );
+    repeat ( cycle ) @ ( `D_MST_CB );
 endtask
 
 task axi_master_driver::send_rsp_2_seq ( axi_seq_item txn );
@@ -69,7 +68,7 @@ endtask
 task axi_master_driver::get_txn();
     axi_seq_item    txn;
 
-    if ( vif.mst_cb.ARESETn ) begin        
+    if ( `D_MST_CB.ARESETn ) begin        
         txn = axi_seq_item :: type_id :: create ("txn");
         seq_item_port.get_next_item(txn);
 
@@ -94,21 +93,20 @@ task axi_master_driver::drive_aw_txn();
     axi_seq_item    txn;
 
     begin
-        while ( !aw_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
+        while ( !aw_q.size() || !`D_MST_CB.ARESETn ) wait_clk(1);
 
         txn = aw_q.pop_front();
         w_q.push_back(txn);
 
-        vif.mst_cb.AWID    <= txn.aw_id;
-        vif.mst_cb.AWADDR  <= txn.aw_addr;
-        vif.mst_cb.AWLEN   <= txn.aw_len;
-        vif.mst_cb.AWSIZE  <= txn.aw_size;
-        vif.mst_cb.AWBURST <= txn.aw_burst;
-        vif.mst_cb.AWPROT  <= txn.aw_prot;
-        vif.mst_cb.AWVALID <= 1;
+        `D_MST_CB.AWID    <= txn.aw_id;
+        `D_MST_CB.AWADDR  <= txn.aw_addr;
+        `D_MST_CB.AWLEN   <= txn.aw_len;
+        `D_MST_CB.AWSIZE  <= txn.aw_size;
+        `D_MST_CB.AWBURST <= txn.aw_burst;
+        `D_MST_CB.AWPROT  <= txn.aw_prot;
+        `D_MST_CB.AWVALID <= 1;
         
-        wait_clk(1);
-        wait ( vif.mst_cb.AWREADY );
+        @(`D_MST_CB iff `D_MST_CB.AWREADY === 1'b1);
         reset_aw_signal();
 
         `uvm_info (
@@ -124,7 +122,7 @@ task axi_master_driver::drive_w_txn();
     axi_seq_item    txn;
     
     begin
-        while ( !w_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
+        while ( !w_q.size() || !`D_MST_CB.ARESETn ) wait_clk(1);
 
         // Support outstanding write transfer
         q_idx = $urandom_range ( 0, w_q.size()-1 );
@@ -138,20 +136,19 @@ task axi_master_driver::drive_w_txn();
         )
 
         for ( int i=0; i<=txn.aw_len; i++ ) begin
-            vif.mst_cb.WID    <= txn.w_id;
-            vif.mst_cb.WDATA  <= txn.w_data.pop_front();
-            vif.mst_cb.WSTRB  <= txn.w_strb.pop_front();
+            `D_MST_CB.WID    <= txn.w_id;
+            `D_MST_CB.WDATA  <= txn.w_data.pop_front();
+            `D_MST_CB.WSTRB  <= txn.w_strb.pop_front();
 
             if ( i == txn.aw_len ) begin
-                vif.mst_cb.WLAST <= 1;
+                `D_MST_CB.WLAST <= 1;
                 b_q.push_back(txn);
             end else begin
-                vif.mst_cb.WLAST <= 0;
+                `D_MST_CB.WLAST <= 0;
             end
-            vif.mst_cb.WVALID <= 1;
+            `D_MST_CB.WVALID <= 1;
 
-            wait_clk(1);
-            wait ( vif.mst_cb.WREADY );
+            @(`D_MST_CB iff `D_MST_CB.WREADY === 1'b1);
             reset_w_signal();
         end
     end
@@ -161,11 +158,12 @@ task axi_master_driver::drive_b_txn();
     axi_seq_item    txn;
     
     begin
-        wait ( vif.mst_cb.BVALID );
+        @ ( `D_MST_CB iff (`D_MST_CB.BVALID === 1'b1 && `D_MST_CB.BREADY === 1'b1) );
 
         txn = b_q.pop_front();
-        txn.b_id <= vif.mst_cb.BID;
-        vif.mst_cb.BREADY <= 0;
+        txn.b_id = `D_MST_CB.BID;
+        $cast(txn.b_resp, vif.mst_cb.BRESP);
+        `D_MST_CB.BREADY <= 0;
 
         wait_clk(1);
         reset_b_signal();
@@ -179,26 +177,25 @@ task axi_master_driver::drive_ar_txn ();
     axi_seq_item    txn;
     
     begin
-        while ( !ar_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
+        while ( !ar_q.size() || !`D_MST_CB.ARESETn ) wait_clk(1);
                 
         txn = ar_q.pop_front();
         r_q.push_back(txn);
         
-        vif.mst_cb.ARID    <= txn.ar_id;
-        vif.mst_cb.ARADDR  <= txn.ar_addr[0];
-        vif.mst_cb.ARLEN   <= txn.ar_len;
-        vif.mst_cb.ARSIZE  <= txn.ar_size;
-        vif.mst_cb.ARBURST <= txn.ar_burst;
-        vif.mst_cb.ARPROT  <= txn.ar_prot;
-        vif.mst_cb.ARVALID <= 1;
+        `D_MST_CB.ARID    <= txn.ar_id;
+        `D_MST_CB.ARADDR  <= txn.ar_addr;
+        `D_MST_CB.ARLEN   <= txn.ar_len;
+        `D_MST_CB.ARSIZE  <= txn.ar_size;
+        `D_MST_CB.ARBURST <= txn.ar_burst;
+        `D_MST_CB.ARPROT  <= txn.ar_prot;
+        `D_MST_CB.ARVALID <= 1;
 
-        wait_clk(1);
-        wait ( vif.mst_cb.ARREADY );
+        @(`D_MST_CB iff `D_MST_CB.ARREADY === 1'b1);
         reset_ar_signal();
 
         `uvm_info (
             "driver_ar_txn",
-            $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.ar_id, txn.ar_addr[0], txn.ar_len, txn.ar_size, txn.ar_burst.name()),
+            $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.ar_id, txn.ar_addr, txn.ar_len, txn.ar_size, txn.ar_burst.name()),
             UVM_DEBUG
         )
     end
@@ -208,13 +205,14 @@ task axi_master_driver::drive_r_txn();
     axi_seq_item    txn;
     
     begin
-        wait ( vif.mst_cb.RVALID );
-        vif.mst_cb.RREADY  <= 0;
-
-        if ( vif.mst_cb.RLAST ) begin
+        @ ( `D_MST_CB iff ( `D_MST_CB.RVALID === 1'b1 && `D_MST_CB.RREADY === 1'b1 ) );
+        `D_MST_CB.RREADY  <= 0;
+        
+        // Read data will be analyzed by scoreboard
+        if ( `D_MST_CB.RLAST ) begin
             txn = r_q.pop_front();
             txn.kind = R_TXN;
-            txn.r_id = vif.mst_cb.RID;
+            txn.r_id = `D_MST_CB.RID;
             send_rsp_2_seq(txn);
         end
 
@@ -225,7 +223,7 @@ endtask : drive_r_txn
 
 task axi_master_driver::reset_signal_handler();
     begin
-        wait ( !vif.mst_cb.ARESETn );
+        wait ( !`D_MST_CB.ARESETn );
         `uvm_info(
             "reset_signal_handler",
             "Reset AXI signal!",
@@ -237,51 +235,51 @@ endtask
 
 task axi_master_driver::reset_aw_signal();
     begin
-        vif.mst_cb.AWID    <= 0;
-        vif.mst_cb.AWADDR  <= 0;
-        vif.mst_cb.AWLEN   <= 0;
-        vif.mst_cb.AWSIZE  <= 0;
-        vif.mst_cb.AWBURST <= 0;
-        vif.mst_cb.AWPROT  <= 0;
-        vif.mst_cb.AWVALID <= 0;
+        `D_MST_CB.AWID    <= 0;
+        `D_MST_CB.AWADDR  <= 0;
+        `D_MST_CB.AWLEN   <= 0;
+        `D_MST_CB.AWSIZE  <= 0;
+        `D_MST_CB.AWBURST <= 0;
+        `D_MST_CB.AWPROT  <= 0;
+        `D_MST_CB.AWVALID <= 0;
         wait_clk(1);
     end
 endtask : reset_aw_signal
 
 task axi_master_driver::reset_w_signal();
     begin
-        vif.mst_cb.WID     <= 0;
-        vif.mst_cb.WDATA   <= 0;
-        vif.mst_cb.WSTRB   <= 0;
-        vif.mst_cb.WLAST   <= 0;
-        vif.mst_cb.WVALID  <= 0;
+        `D_MST_CB.WID     <= 0;
+        `D_MST_CB.WDATA   <= 0;
+        `D_MST_CB.WSTRB   <= 0;
+        `D_MST_CB.WLAST   <= 0;
+        `D_MST_CB.WVALID  <= 0;
         wait_clk(1);
     end
 endtask : reset_w_signal
 
 task axi_master_driver::reset_b_signal();
     begin
-        vif.mst_cb.BREADY  <= 1;
+        `D_MST_CB.BREADY  <= 1;
         wait_clk(1);
     end
 endtask : reset_b_signal
 
 task axi_master_driver::reset_ar_signal();
     begin
-        vif.mst_cb.ARID    <= 0;
-        vif.mst_cb.ARADDR  <= 0;
-        vif.mst_cb.ARLEN   <= 0;
-        vif.mst_cb.ARSIZE  <= 0;
-        vif.mst_cb.ARBURST <= 0;
-        vif.mst_cb.ARPROT  <= 0;
-        vif.mst_cb.ARVALID <= 0;
+        `D_MST_CB.ARID    <= 0;
+        `D_MST_CB.ARADDR  <= 0;
+        `D_MST_CB.ARLEN   <= 0;
+        `D_MST_CB.ARSIZE  <= 0;
+        `D_MST_CB.ARBURST <= 0;
+        `D_MST_CB.ARPROT  <= 0;
+        `D_MST_CB.ARVALID <= 0;
         wait_clk(1);
     end
 endtask : reset_ar_signal
 
 task axi_master_driver::reset_r_signal();
     begin
-        vif.mst_cb.RREADY  <= 1;
+        `D_MST_CB.RREADY  <= 1;
         wait_clk(1);
     end
 endtask : reset_r_signal

@@ -10,4 +10,10 @@
 
 `define D_SLV_CNT           1
 
+`define D_DRV_IF            axi_if.drv_if
+`define D_MON_IF            axi_if.mon_if
+
+`define D_MST_CB            axi_if.mst_cb
+`define D_SLV_CB            axi_if.slv_cb
+
 `endif
