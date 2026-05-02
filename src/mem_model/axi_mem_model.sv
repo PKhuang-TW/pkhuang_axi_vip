@@ -5,6 +5,7 @@ class axi_mem_model extends uvm_object;
     `uvm_object_utils(axi_mem_model)
     
     bit [`D_MEM_SIZE-1:0][7:0]      mem;
+    bit [`D_MEM_SIZE-1:0]           mem_lock;
     axi_id_info_map                 r_id_info_map, w_id_info_map;
 
     function new ( string name = "axi_mem_model" );
@@ -25,7 +26,7 @@ class axi_mem_model extends uvm_object;
         size = w_id_info_map.size[id];
         addr = w_id_info_map.addr_q[id].pop_front();
 
-        for ( [`D_ADDR_WIDTH-1:0] i=0; i<(1 << size); i++ ) begin
+        for ( bit [`D_ADDR_WIDTH-1:0] i=0; i<(1 << size); i++ ) begin
             if ( (strb >> i) & 1'b1 ) begin
                 mem[addr + i] = data[7+8*i -: 8];
 
@@ -94,6 +95,22 @@ class axi_mem_model extends uvm_object;
             id_info_map = w_id_info_map;
         end else if ( op == READ ) begin
             id_info_map = r_id_info_map;
+        end
+
+        // // Set lock to prevent w/r race condition
+        // for ( int transfer_idx=0; transfer_idx<=len; transfer_idx++) begin
+        //     start_addr = id_info_map.get_addr_by_id_idx(.id(id), .idx(transfer_idx));
+        //     for ( int byte_idx=0; byte_idx<(1<<size); byte_idx++) begin
+        //         mem_lock[start_addr + byte_idx] = 1;
+        //     end
+        // end
+
+        // Clear mem lock
+        for ( int transfer_idx=0; transfer_idx<=id_info_map.len[id]; transfer_idx++) begin
+            start_addr = id_info_map.get_addr_by_id_idx(.id(id), .idx(transfer_idx));
+            for ( int byte_idx=0; byte_idx<(1<<id_info_map.size[id]); byte_idx++) begin
+                mem_lock[start_addr + byte_idx] = 0;
+            end
         end
 
         id_info_map.clr_id_info(id);

@@ -93,9 +93,7 @@ class axi_seq_item extends uvm_sequence_item;
         `uvm_field_int(aw_len, UVM_ALL_ON)
         `uvm_field_int(aw_size, UVM_ALL_ON)
         `uvm_field_enum(burst_type_e, aw_burst, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.instruction, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.non_secure, UVM_ALL_ON)
-        `uvm_field_int(aw_prot.privileged, UVM_ALL_ON)
+        `uvm_field_int(aw_prot, UVM_ALL_ON)
         `uvm_field_int(w_id, UVM_ALL_ON)
         `uvm_field_queue_int(w_data, UVM_ALL_ON)
         `uvm_field_queue_int(w_strb, UVM_ALL_ON)
@@ -108,14 +106,12 @@ class axi_seq_item extends uvm_sequence_item;
         `uvm_field_int(ar_len, UVM_ALL_ON)
         `uvm_field_int(ar_size, UVM_ALL_ON)
         `uvm_field_enum(burst_type_e, ar_burst, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.instruction, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.non_secure, UVM_ALL_ON)
-        `uvm_field_int(ar_prot.privileged, UVM_ALL_ON)
+        `uvm_field_int(ar_prot, UVM_ALL_ON)
         `uvm_field_int(r_id, UVM_ALL_ON)
         `uvm_field_queue_int(r_data, UVM_ALL_ON)
         `uvm_field_int(r_last, UVM_ALL_ON)
-        `uvm_field_queue_enum(rsp_e, r_resp, UVM_ALL_ON)
-        `uvm_field_queue_enum(rsp_e, exp_r_resp, UVM_ALL_ON)
+        `uvm_field_queue_enum(rsp_e, r_resp, UVM_ALL_ON | UVM_NOPACK)
+        `uvm_field_queue_enum(rsp_e, exp_r_resp, UVM_ALL_ON | UVM_NOPACK)
     `uvm_object_utils_end
 
     function new(string name = "axi_seq_item");

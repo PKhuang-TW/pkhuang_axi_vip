@@ -10,14 +10,12 @@ class axi_master_agent extends axi_agent_base;
 
     function void build_phase ( uvm_phase phase );
 
-        factory.set_inst_override_by_type(
-            axi_driver_base::get_type(),
+        axi_driver_base::type_id::set_inst_override(
             axi_master_driver::get_type(),
             "*agt_mst.*"
         );
 
-        factory.set_inst_override_by_type(
-            axi_monitor_base::get_type(),
+        axi_monitor_base::type_id::set_inst_override(
             axi_master_monitor::get_type(),
             "*agt_mst.*"
         );

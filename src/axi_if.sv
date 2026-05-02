@@ -88,7 +88,7 @@ interface axi_if;
 
         //////// Write Response ////////
         input       BID, BRESP, BVALID;
-        output      BREADY;
+        inout       BREADY;
         
         //////// Read Address ////////
         output      ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARPROT, ARVALID;
@@ -96,7 +96,7 @@ interface axi_if;
         
         //////// Read Data ////////
         input       RID, RDATA, RRESP, RLAST, RVALID;
-        output      RREADY;
+        inout       RREADY;
     endclocking
 
     clocking slv_cb @( posedge ACLK );
@@ -126,10 +126,6 @@ interface axi_if;
         output      RID, RDATA, RRESP, RLAST, RVALID;
         input       RREADY;
     endclocking
-
-    modport mst_if ( clocking mst_cb );
-    modport slv_if ( clocking slv_cb );
-    modport mon_if ( clocking mon_cb );
 
 endinterface
 

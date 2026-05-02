@@ -6,7 +6,7 @@ class axi_slave_driver extends axi_driver_base;
 
     axi_mem_model               mem_model;
 
-    virtual axi_if.slv_if       vif;
+    virtual axi_if              vif;
 
     function new ( string name = "axi_slave_driver", uvm_component parent );
         super.new(name, parent);
@@ -15,7 +15,7 @@ class axi_slave_driver extends axi_driver_base;
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if ( !uvm_config_db #(virtual axi_if.slv_if) :: get (this, "", "vif.slv_if", vif) )
+        if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )
             `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
 
         mem_model = new("mem_model");
@@ -52,13 +52,12 @@ class axi_slave_driver extends axi_driver_base;
 endclass : axi_slave_driver
 
 task axi_slave_driver::wait_clk ( int cycle );
-    #1;  // simulate delay to trigger mst_cb
-    @ ( vif.slv_cb );
+    repeat ( cycle ) @ ( vif.slv_cb );
 endtask
 
 task axi_slave_driver::aw_signal_handler();
     begin
-        wait ( vif.slv_cb.AWVALID );
+        while ( !vif.slv_cb.AWVALID ) wait_clk(1);
 
         `uvm_info (
             "aw_signal_handler",

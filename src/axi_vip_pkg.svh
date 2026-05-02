@@ -8,6 +8,8 @@ package axi_vip_pkg;
     `include "axi_define.svh"
     `include "axi_typedef.svh"
     import axi_typedef::*;
+    
+    `include "axi_utils.svh"
 
     `include "axi_seq_item.sv"
     `include "axi_id_info_map.sv"

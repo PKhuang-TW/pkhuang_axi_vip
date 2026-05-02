@@ -7,7 +7,7 @@ class axi_scoreboard extends uvm_scoreboard;
     axi_mem_model                                       mem_model;
     uvm_analysis_imp #(axi_seq_item, axi_scoreboard)    ap_imp;
 
-    function new ( name = "axi_scoreboard", uvm_component parent );
+    function new ( string name = "axi_scoreboard", uvm_component parent );
         super.new(name, parent);
         ap_imp = new("ap_imp", this);
     endfunction

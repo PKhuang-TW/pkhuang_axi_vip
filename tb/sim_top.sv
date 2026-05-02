@@ -28,9 +28,9 @@ module sim_top;
     initial begin
 
         uvm_config_db #(virtual axi_if) :: set (null, "*", "vif", vif);
-        uvm_config_db #(virtual axi_if.mst_if) :: set (null, "*", "vif.mst_if", vif.mst_if);
-        uvm_config_db #(virtual axi_if.slv_if) :: set (null, "*", "vif.slv_if", vif.slv_if);
-        uvm_config_db #(virtual axi_if.mon_if) :: set (null, "*", "vif.mon_if", vif.mon_if);
+        // uvm_config_db #(virtual `D_MST_IF) :: set (null, "*", "vif.mst_cb", vif.mst_cb);
+        // uvm_config_db #(virtual `D_SLV_IF) :: set (null, "*", "vif.slv_cb", vif.slv_cb);
+        // uvm_config_db #(virtual `D_MON_IF) :: set (null, "*", "vif.mon_cb", vif.mon_cb);
 
         clk     = 0;
         rst_n   = 0;
@@ -39,9 +39,9 @@ module sim_top;
         rst_n   = 1;
     end
 
-    initial begin
-        $fsdbDumpfile("wave.fsdb");
-        $fsdbDumpvars;
-    end
+    // initial begin
+    //     $fsdbDumpfile("wave.fsdb");
+    //     $fsdbDumpvars;
+    // end
     
 endmodule

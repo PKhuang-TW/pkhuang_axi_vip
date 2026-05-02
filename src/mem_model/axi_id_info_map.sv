@@ -3,16 +3,21 @@
 
 class axi_id_info_map;
 
-    // Record all info (len, size, addr of each transfer) for each ID
-    bit [`D_ID_WIDTH-1:0]           id [$];
-    bit [7:0]                       len [bit [`D_ID_WIDTH-1:0]];
-    bit [2:0]                       size [bit [`D_ID_WIDTH-1:0]];
-    burst_type_e                    burst [bit [`D_ID_WIDTH-1:0]];
-    prot_s                          prot [bit [`D_ID_WIDTH-1:0]];
-    bit [`D_ADDR_WIDTH-1:0]         addr_q [bit [`D_ID_WIDTH-1:0]][$];
-    bit [`D_DATA_WIDTH-1:0]         data_q [bit [`D_ID_WIDTH-1:0]][$];
-    bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [bit [`D_ID_WIDTH-1:0]][$];
-    bit                             complete [bit [`D_ID_WIDTH-1:0]];
+    // Typedefs for cleaner associative array & queue declarations
+    typedef bit [`D_ID_WIDTH-1:0]           axi_id_t;
+    typedef bit [`D_ADDR_WIDTH-1:0]         addr_q_t [$];
+    typedef bit [`D_DATA_WIDTH-1:0]         data_q_t [$];
+    typedef bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q_t [$];
+
+    axi_id_t                        id [$];
+    bit [7:0]                       len      [axi_id_t];
+    bit [2:0]                       size     [axi_id_t];
+    burst_type_e                    burst    [axi_id_t];
+    prot_s                          prot     [axi_id_t];
+    addr_q_t                        addr_q   [axi_id_t];
+    data_q_t                        data_q   [axi_id_t];
+    strb_q_t                        strb_q   [axi_id_t];
+    bit                             complete [axi_id_t];
 
     function void set_id_info (
         bit [`D_ID_WIDTH-1:0]           id,
@@ -27,41 +32,42 @@ class axi_id_info_map;
         bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{},
         bit                             complete = 0
     );
-        bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
-        bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
+        // bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
+        // bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
 
         this.id.push_back(id);
         this.len[id]    = len;
         this.size[id]   = size;
         this.burst[id]  = burst;
 
-        case ( burst )
-            BURST_TYPE_FIXED: begin
-                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
-                    this.addr_q[id].push_back(addr);
-                end
-            end
+        // case ( burst )
+        //     BURST_TYPE_FIXED: begin
+        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //             this.addr_q[id].push_back(addr);
+        //         end
+        //     end
 
-            BURST_TYPE_INCR: begin
-                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
-                    this.addr_q[id].push_back( addr + (i * (1 << size)) );
-                end
-            end
+        //     BURST_TYPE_INCR: begin
+        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //             this.addr_q[id].push_back( addr + (i * (1 << size)) );
+        //         end
+        //     end
 
-            BURST_TYPE_WRAP: begin
-                total_size      = ( len + 1 ) * ( 1 << size );
-                wrap_boundary   = ( addr / total_size ) * total_size;
-                for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
-                    this.addr_q[id].push_back(
-                        ( addr - wrap_boundary + i * (1<<size) ) % total_size
-                    );
-                end
-            end
+        //     BURST_TYPE_WRAP: begin
+        //         total_size      = ( len + 1 ) * ( 1 << size );
+        //         wrap_boundary   = ( addr / total_size ) * total_size;
+        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //             this.addr_q[id].push_back(
+        //                 ( addr - wrap_boundary + i * (1<<size) ) % total_size
+        //             );
+        //         end
+        //     end
 
-            default: begin
-                `uvm_error ("ERROR", $sformatf("Unexpected TXN burst type! (%0d)", burst) )
-            end
-        endcase
+        //     default: begin
+        //         `uvm_error ("ERROR", $sformatf("Unexpected TXN burst type! (%0d)", burst) )
+        //     end
+        // endcase
+        this.addr_q[id] = get_addr_q ( addr, len, size, burst );
 
         for ( int i=0; i<=len; i++ ) begin
             this.data_q[id].push_back(data_q[i]);

@@ -2,7 +2,7 @@
 `define AXI_TYPEDEF_SVH
 
 package axi_typedef;
-    typedef enum { 
+    typedef enum logic [1:0] { 
         BURST_TYPE_FIXED,
         BURST_TYPE_INCR,
         BURST_TYPE_WRAP,
@@ -15,14 +15,14 @@ package axi_typedef;
         logic privileged;  // Corresponds to AxPROT[0]
     } prot_s;
 
-    typedef enum {
+    typedef enum logic [1:0] {
         RSP_OKAY,
         RSP_EXOKAY,
         RSP_SLVERR,
         RSP_DECERR
     } rsp_e;
 
-    typedef enum {
+    typedef enum logic [2:0] {
         AW_TXN,
         W_TXN,
         B_TXN,
@@ -30,12 +30,12 @@ package axi_typedef;
         R_TXN
     } txn_kind_e;
 
-    typedef enum {
+    typedef enum logic {
         WRITE,
         READ
     } operation_e;
 
-    typedef enum {
+    typedef enum logic {
         ROLE_MST,
         ROLE_SLV
     } role_e;
