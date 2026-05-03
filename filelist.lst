@@ -3,6 +3,7 @@
 +incdir+./src
 +incdir+./src/define
 +incdir+./src/seq
++incdir+./src/vseq
 +incdir+./src/master
 +incdir+./src/slave
 +incdir+./src/mem_model

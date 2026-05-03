@@ -68,7 +68,7 @@ endtask
 task axi_master_driver::get_txn();
     axi_seq_item    txn;
 
-    if ( vif.mst_cb.ARESETn ) begin
+    if ( vif.mst_cb.ARESETn === 1'b1 ) begin
         txn = axi_seq_item :: type_id :: create ("txn");
         seq_item_port.get_next_item(txn);
 
@@ -93,7 +93,7 @@ task axi_master_driver::drive_aw_txn();
     axi_seq_item    txn;
 
     begin
-        while ( !aw_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
+        @(vif.mst_cb iff (aw_q.size() > 0 && vif.mst_cb.ARESETn === 1'b1));
 
         txn = aw_q.pop_front();
         w_q.push_back(txn);
@@ -112,7 +112,7 @@ task axi_master_driver::drive_aw_txn();
         `uvm_info (
             "drive_aw_txn",
             $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.aw_id, txn.aw_addr[0], txn.aw_len, txn.aw_size, txn.aw_burst.name()),
-            UVM_DEBUG
+            UVM_HIGH
         )
     end
 endtask : drive_aw_txn
@@ -132,7 +132,7 @@ task axi_master_driver::drive_w_txn();
         `uvm_info (
             "drive_w_txn",
             $sformatf("ID=0x%h", txn.w_id),
-            UVM_DEBUG
+            UVM_HIGH
         )
 
         for ( int i=0; i<=txn.aw_len; i++ ) begin
@@ -196,7 +196,7 @@ task axi_master_driver::drive_ar_txn ();
         `uvm_info (
             "driver_ar_txn",
             $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.ar_id, txn.ar_addr, txn.ar_len, txn.ar_size, txn.ar_burst.name()),
-            UVM_DEBUG
+            UVM_HIGH
         )
     end
 endtask : drive_ar_txn
@@ -223,11 +223,12 @@ endtask : drive_r_txn
 
 task axi_master_driver::reset_signal_handler();
     begin
-        wait ( !vif.mst_cb.ARESETn );
+        while ( vif.mst_cb.ARESETn === 1'b1 ) wait_clk(1);
+        // wait ( vif.ARESETn === 1'b0 );
         `uvm_info(
             "reset_signal_handler",
-            "Reset AXI signal!",
-            UVM_DEBUG
+            "Reset AXI master signal!",
+            UVM_HIGH
         )
         reset_axi_signal();
     end

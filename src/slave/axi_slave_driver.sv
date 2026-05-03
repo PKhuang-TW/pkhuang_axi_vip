@@ -57,7 +57,8 @@ endtask
 
 task axi_slave_driver::aw_signal_handler();
     begin
-        while ( !vif.slv_cb.AWVALID ) wait_clk(1);
+        // while ( vif.slv_cb.AWVALID !== 1'b0 ) wait_clk(1);
+        @ (vif.slv_cb iff vif.slv_cb.AWVALID === 1'b1);
 
         `uvm_info (
             "aw_signal_handler",
@@ -206,7 +207,12 @@ endtask : r_signal_handler
 
 task axi_slave_driver::reset_signal_handler();
     begin
-        wait ( !vif.slv_cb.ARESETn );
+        while ( vif.slv_cb.ARESETn === 1'b1 ) wait_clk(1);
+        `uvm_info(
+            "reset_signal_handler",
+            "Reset AXI slave signal!",
+            UVM_HIGH
+        )
         reset_axi_signal();
     end
 endtask

@@ -84,7 +84,7 @@ class axi_master_monitor extends axi_monitor_base;
                             `uvm_info(
                                 "monitor_w_channel",
                                 $sformatf("ID=0x%h, Data=0x%h, Strb='b%b, Last=%0d", w_txn.w_id, vif.mon_cb.WDATA, vif.mon_cb.WSTRB, vif.mon_cb.WLAST),
-                                UVM_DEBUG
+                                UVM_HIGH
                             )
                             w_txn.w_data.push_back ( vif.mon_cb.WDATA );
                             w_txn.w_strb.push_back ( vif.mon_cb.WSTRB );
@@ -158,7 +158,7 @@ class axi_master_monitor extends axi_monitor_base;
                 `uvm_info(
                     "monitor_r_channel",
                     $sformatf("ID=0x%h, Data=0x%h, Last=%0d", r_txn.r_id, vif.mon_cb.RDATA, r_txn.r_last),
-                    UVM_DEBUG
+                    UVM_HIGH
                 )
 
                 // ap.write(r_txn);

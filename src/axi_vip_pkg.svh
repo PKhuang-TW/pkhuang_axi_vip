@@ -27,14 +27,21 @@ package axi_vip_pkg;
     `include "axi_master_agent.sv"
     `include "axi_slave_agent.sv"
 
+    `include "axi_master_sequencer.sv"
+    `include "axi_slave_sequencer.sv"
+    `include "axi_virtual_sequencer.sv"
+
     `include "axi_scoreboard.sv"
     `include "axi_env.sv"
 
-    `include "axi_aw_seq.sv"
+    `include "axi_write_seq.sv"
     `include "axi_rand_rw_seq.sv"
 
-    `include "axi_basic_test.sv"
+    `include "axi_write_virtual_sequence.sv"
+
+    `include "axi_test_base.sv"
     `include "axi_rand_rw_test.sv"
+    `include "test_axi_write_random.sv"
 
 endpackage
 

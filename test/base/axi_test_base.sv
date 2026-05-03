@@ -1,13 +1,12 @@
 `ifndef AXI_BASIC_TEST_SV
 `define AXI_BASIC_TEST_SV
 
-class axi_basic_test extends uvm_test;
-    `uvm_component_utils(axi_basic_test)
+class axi_test_base extends uvm_test;
+    `uvm_component_utils(axi_test_base)
 
     axi_env         env;
-    axi_aw_seq      w_seq;
 
-    function new ( string name = "axi_basic_test", uvm_component parent );
+    function new ( string name = "axi_test_base", uvm_component parent );
         super.new(name, parent);
     endfunction
 
@@ -21,13 +20,6 @@ class axi_basic_test extends uvm_test;
         uvm_top.print_topology();
         uvm_factory::get().print();
     endfunction
-
-    virtual task run_phase ( uvm_phase phase );
-        phase.raise_objection(this);
-        w_seq = axi_aw_seq :: type_id :: create ("w_seq");
-        w_seq.start ( env.agt_mst.seqr );
-        phase.drop_objection(this);
-    endtask
 
 endclass
 

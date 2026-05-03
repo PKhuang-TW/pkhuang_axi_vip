@@ -20,6 +20,11 @@ class axi_slave_agent extends axi_agent_base;
             "*agt_slv.*"
         );
 
+        uvm_sequencer#(axi_seq_item)::type_id::set_inst_override(
+            axi_slave_sequencer::get_type(),
+            "*agt_slv.*"
+        );
+
         super.build_phase(phase);
     endfunction
 endclass
