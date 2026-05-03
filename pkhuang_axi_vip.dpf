@@ -8,7 +8,7 @@ simulations:
   - name: simulation
     options: >-
       -image image -uvm 1.2 -waves waves.mxd +UVM_NO_RELNOTES
-      +UVM_TESTNAME=test_axi_write_random +UVM_VERBOSITY=UVM_HIGH
+      +UVM_TESTNAME=test_axi_inorder_write_random +UVM_VERBOSITY=UVM_HIGH
   - name: elaboration
     options: '-top work.sim_top -genimage image -uvm 1.2 +acc+b -F filelist.lst'
 source_files:

@@ -34,14 +34,16 @@ package axi_vip_pkg;
     `include "axi_scoreboard.sv"
     `include "axi_env.sv"
 
-    `include "axi_write_seq.sv"
+    `include "axi_aw_seq.sv"
+    `include "axi_w_seq.sv"
+    `include "axi_b_seq.sv"
     `include "axi_rand_rw_seq.sv"
 
-    `include "axi_write_virtual_sequence.sv"
+    `include "axi_inorder_write_vseq.sv"
 
     `include "axi_test_base.sv"
     `include "axi_rand_rw_test.sv"
-    `include "test_axi_write_random.sv"
+    `include "test_axi_inorder_write_random.sv"
 
 endpackage
 

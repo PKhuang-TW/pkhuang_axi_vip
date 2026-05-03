@@ -23,7 +23,7 @@ class axi_master_driver extends axi_driver_base;
             forever begin get_txn()                 ;end
             forever begin drive_aw_txn()            ;end
             forever begin drive_w_txn()             ;end
-            forever begin drive_b_txn()             ;end
+            forever begin listen_b_txn()             ;end
             forever begin drive_ar_txn()            ;end
             forever begin drive_r_txn()             ;end
             forever begin reset_signal_handler()    ;end
@@ -32,7 +32,7 @@ class axi_master_driver extends axi_driver_base;
 
     extern virtual task drive_aw_txn ();
     extern virtual task drive_w_txn ();
-    extern virtual task drive_b_txn ();
+    extern virtual task listen_b_txn ();
     extern virtual task drive_ar_txn ();
     extern virtual task drive_r_txn ();
 
@@ -74,12 +74,18 @@ task axi_master_driver::get_txn();
 
         if ( txn.kind == AW_TXN ) begin
             `uvm_info("GET_TXN", $sformatf("Kind = %s, AWID = 0x%h", txn.kind.name(), txn.aw_id), UVM_HIGH )
+        end else if ( txn.kind == W_TXN ) begin
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, WID = 0x%h", txn.kind.name(), txn.w_id), UVM_HIGH )
+        end else if ( txn.kind == B_TXN ) begin
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, BID = 0x%h", txn.kind.name(), txn.b_id), UVM_HIGH )
         end else if ( txn.kind == AR_TXN ) begin
             `uvm_info("GET_TXN", $sformatf("Kind = %s, ARID = 0x%h", txn.kind.name(), txn.ar_id), UVM_HIGH )
         end
 
         case ( txn.kind )
             AW_TXN:     aw_q.push_back(txn);
+            W_TXN:      w_q.push_back(txn);
+            B_TXN:      b_q.push_back(txn);
             AR_TXN:     ar_q.push_back(txn);            
             default:    `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()))
         endcase
@@ -96,7 +102,6 @@ task axi_master_driver::drive_aw_txn();
         @(vif.mst_cb iff (aw_q.size() > 0 && vif.mst_cb.ARESETn === 1'b1));
 
         txn = aw_q.pop_front();
-        w_q.push_back(txn);
 
         vif.mst_cb.AWID    <= txn.aw_id;
         vif.mst_cb.AWADDR  <= txn.aw_addr;
@@ -105,15 +110,15 @@ task axi_master_driver::drive_aw_txn();
         vif.mst_cb.AWBURST <= txn.aw_burst;
         vif.mst_cb.AWPROT  <= txn.aw_prot;
         vif.mst_cb.AWVALID <= 1;
-        
-        @(vif.mst_cb iff vif.mst_cb.AWREADY === 1'b1);
-        reset_aw_signal();
 
         `uvm_info (
             "drive_aw_txn",
             $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.aw_id, txn.aw_addr[0], txn.aw_len, txn.aw_size, txn.aw_burst.name()),
             UVM_HIGH
         )
+        
+        @(vif.mst_cb iff vif.mst_cb.AWREADY === 1'b1);
+        reset_aw_signal();
     end
 endtask : drive_aw_txn
 
@@ -122,12 +127,9 @@ task axi_master_driver::drive_w_txn();
     axi_seq_item    txn;
     
     begin
-        while ( !w_q.size() || !vif.mst_cb.ARESETn ) wait_clk(1);
+        @(vif.mst_cb iff (w_q.size() > 0 && vif.mst_cb.ARESETn === 1'b1));
 
-        // Support outstanding write transfer
-        q_idx = $urandom_range ( 0, w_q.size()-1 );
-        txn = w_q[q_idx];
-        w_q.delete(q_idx);
+        txn = w_q.pop_front();
 
         `uvm_info (
             "drive_w_txn",
@@ -142,7 +144,6 @@ task axi_master_driver::drive_w_txn();
 
             if ( i == txn.aw_len ) begin
                 vif.mst_cb.WLAST <= 1;
-                b_q.push_back(txn);
             end else begin
                 vif.mst_cb.WLAST <= 0;
             end
@@ -154,24 +155,28 @@ task axi_master_driver::drive_w_txn();
     end
 endtask : drive_w_txn
 
-task axi_master_driver::drive_b_txn();
-    axi_seq_item    txn;
+task axi_master_driver::listen_b_txn();
+    axi_seq_item    txn, rsp;
     
     begin
         @ ( vif.mst_cb iff (vif.mst_cb.BVALID === 1'b1 && vif.mst_cb.BREADY === 1'b1) );
 
+        wait ( b_q.size() );
         txn = b_q.pop_front();
-        txn.b_id = vif.mst_cb.BID;
+        
+        rsp = axi_seq_item::type_id::create("rsp");
+        rsp.set_id_info(txn);
+        rsp.kind = B_TXN;
+        rsp.b_id = vif.mst_cb.BID;
         $cast(txn.b_resp, vif.mst_cb.BRESP);
         vif.mst_cb.BREADY <= 0;
 
         wait_clk(1);
         reset_b_signal();
-
-        txn.kind = B_TXN;
-        send_rsp_2_seq(txn);
+        seq_item_port.put_response(rsp);
+        // send_rsp_2_seq(req);
     end
-endtask : drive_b_txn
+endtask : listen_b_txn
 
 task axi_master_driver::drive_ar_txn ();
     axi_seq_item    txn;

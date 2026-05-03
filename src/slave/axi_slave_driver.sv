@@ -57,7 +57,6 @@ endtask
 
 task axi_slave_driver::aw_signal_handler();
     begin
-        // while ( vif.slv_cb.AWVALID !== 1'b0 ) wait_clk(1);
         @ (vif.slv_cb iff vif.slv_cb.AWVALID === 1'b1);
 
         `uvm_info (

@@ -87,7 +87,7 @@ pkhuang_axi_vip/
 │   ├── base/
 │   │   └── axi_test_base.sv
 │   ├── axi_rand_rw_test.sv
-│   └── test_axi_write_random.sv
+│   └── test_axi_inorder_write_random.sv
 │
 ├── vip/
 │   ├── base/
@@ -111,7 +111,9 @@ pkhuang_axi_vip/
 |   │
 │   ├── seq/
 │   │   ├── axi_rand_rw_seq.sv
-│   │   └── axi_write_seq.sv
+│   │   ├── axi_aw_seq.sv
+│   │   ├── axi_w_seq.sv
+│   │   └── axi_b_seq.sv
 │   │
 │   ├── package/
 │   │   └── axi_vip_pkg.svh
@@ -123,7 +125,7 @@ pkhuang_axi_vip/
 │   │   └── axi_slave_monitor.sv
 |   │
 │   ├── vseq/
-│   │   └── axi_write_virtual_sequence.sv
+│   │   └── axi_inorder_write_vseq.sv
 │   │
 │   ├── axi_env.sv
 │   ├── axi_if.sv
