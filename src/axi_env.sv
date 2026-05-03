@@ -25,8 +25,19 @@ class axi_env extends uvm_env;
 
     function void connect_phase ( uvm_phase phase );
         super.connect_phase(phase);
-        agt_mst.mon.ap.connect ( scb.ap_imp );
-        
+
+        agt_mst.mon.aw_ap.connect ( scb.mst_aw_fifo.analysis_export );
+        agt_mst.mon.w_ap.connect ( scb.mst_w_fifo.analysis_export );
+        agt_mst.mon.b_ap.connect ( scb.mst_b_fifo.analysis_export );
+        agt_mst.mon.ar_ap.connect ( scb.mst_ar_fifo.analysis_export );
+        agt_mst.mon.r_ap.connect ( scb.mst_r_fifo.analysis_export );
+
+        agt_slv.mon.aw_ap.connect ( scb.slv_aw_fifo.analysis_export );
+        agt_slv.mon.w_ap.connect ( scb.slv_w_fifo.analysis_export );
+        agt_slv.mon.b_ap.connect ( scb.slv_b_fifo.analysis_export );
+        agt_slv.mon.ar_ap.connect ( scb.slv_ar_fifo.analysis_export );
+        agt_slv.mon.r_ap.connect ( scb.slv_r_fifo.analysis_export );
+
         if ( !$cast(vseqr.seqr_mst, agt_mst.seqr) ) begin
             `uvm_error("CAST_FAIL", "agt_mst.seqr is not an axi_master_sequencer")
         end
