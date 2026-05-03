@@ -22,10 +22,24 @@ class axi_slave_agent extends axi_agent_base;
 
         uvm_sequencer#(axi_seq_item)::type_id::set_inst_override(
             axi_slave_sequencer::get_type(),
-            "*agt_slv.*"
+            "seqr",
+            this
         );
 
         super.build_phase(phase);
+    endfunction
+
+    virtual function void connect_phase ( uvm_phase phase );
+        axi_slave_driver    slv_drv;
+        axi_slave_sequencer slv_seqr;
+
+        super.connect_phase(phase);
+
+        $cast(slv_drv, drv);
+        $cast(slv_seqr, seqr);
+
+        slv_drv.aw_ap.connect ( slv_seqr.aw_fifo.analysis_export );
+        slv_drv.w_ap.connect ( slv_seqr.w_fifo.analysis_export );
     endfunction
 endclass
 

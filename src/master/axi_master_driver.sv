@@ -23,7 +23,7 @@ class axi_master_driver extends axi_driver_base;
             forever begin get_txn()                 ;end
             forever begin drive_aw_txn()            ;end
             forever begin drive_w_txn()             ;end
-            forever begin listen_b_txn()             ;end
+            forever begin listen_b_txn()            ;end
             forever begin drive_ar_txn()            ;end
             forever begin drive_r_txn()             ;end
             forever begin reset_signal_handler()    ;end
@@ -73,13 +73,13 @@ task axi_master_driver::get_txn();
         seq_item_port.get_next_item(txn);
 
         if ( txn.kind == AW_TXN ) begin
-            `uvm_info("GET_TXN", $sformatf("Kind = %s, AWID = 0x%h", txn.kind.name(), txn.aw_id), UVM_HIGH )
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, AWID = 0x%h", txn.kind.name(), txn.aw_id), UVM_MEDIUM )
         end else if ( txn.kind == W_TXN ) begin
-            `uvm_info("GET_TXN", $sformatf("Kind = %s, WID = 0x%h", txn.kind.name(), txn.w_id), UVM_HIGH )
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, WID = 0x%h", txn.kind.name(), txn.w_id), UVM_MEDIUM )
         end else if ( txn.kind == B_TXN ) begin
-            `uvm_info("GET_TXN", $sformatf("Kind = %s, BID = 0x%h", txn.kind.name(), txn.b_id), UVM_HIGH )
+            `uvm_info("GET_TXN", "Waiting for B TXN...", UVM_MEDIUM )
         end else if ( txn.kind == AR_TXN ) begin
-            `uvm_info("GET_TXN", $sformatf("Kind = %s, ARID = 0x%h", txn.kind.name(), txn.ar_id), UVM_HIGH )
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, ARID = 0x%h", txn.kind.name(), txn.ar_id), UVM_MEDIUM )
         end
 
         case ( txn.kind )
@@ -114,7 +114,7 @@ task axi_master_driver::drive_aw_txn();
         `uvm_info (
             "drive_aw_txn",
             $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.aw_id, txn.aw_addr[0], txn.aw_len, txn.aw_size, txn.aw_burst.name()),
-            UVM_HIGH
+            UVM_MEDIUM
         )
         
         @(vif.mst_cb iff vif.mst_cb.AWREADY === 1'b1);
@@ -134,7 +134,7 @@ task axi_master_driver::drive_w_txn();
         `uvm_info (
             "drive_w_txn",
             $sformatf("ID=0x%h", txn.w_id),
-            UVM_HIGH
+            UVM_MEDIUM
         )
 
         for ( int i=0; i<=txn.aw_len; i++ ) begin
@@ -148,10 +148,9 @@ task axi_master_driver::drive_w_txn();
                 vif.mst_cb.WLAST <= 0;
             end
             vif.mst_cb.WVALID <= 1;
-
             @(vif.mst_cb iff vif.mst_cb.WREADY === 1'b1);
-            reset_w_signal();
         end
+        reset_w_signal();
     end
 endtask : drive_w_txn
 
@@ -201,7 +200,7 @@ task axi_master_driver::drive_ar_txn ();
         `uvm_info (
             "driver_ar_txn",
             $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.ar_id, txn.ar_addr, txn.ar_len, txn.ar_size, txn.ar_burst.name()),
-            UVM_HIGH
+            UVM_MEDIUM
         )
     end
 endtask : drive_ar_txn
@@ -233,7 +232,7 @@ task axi_master_driver::reset_signal_handler();
         `uvm_info(
             "reset_signal_handler",
             "Reset AXI master signal!",
-            UVM_HIGH
+            UVM_MEDIUM
         )
         reset_axi_signal();
     end

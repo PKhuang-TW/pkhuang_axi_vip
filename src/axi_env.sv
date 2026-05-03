@@ -26,8 +26,7 @@ class axi_env extends uvm_env;
     function void connect_phase ( uvm_phase phase );
         super.connect_phase(phase);
         agt_mst.mon.ap.connect ( scb.ap_imp );
-        // vseqr.seqr_mst  = agt_mst.seqr;
-        // vseqr.seqr_slv  = agt_slv.seqr;
+        
         if ( !$cast(vseqr.seqr_mst, agt_mst.seqr) ) begin
             `uvm_error("CAST_FAIL", "agt_mst.seqr is not an axi_master_sequencer")
         end

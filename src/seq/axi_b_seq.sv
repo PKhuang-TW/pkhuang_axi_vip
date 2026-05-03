@@ -19,7 +19,7 @@ class axi_b_seq extends uvm_sequence #(axi_seq_item);;
 
         get_response(rsp);
 
-        `uvm_info ( "Get B Response", $sformatf("Response from ID(0x%h) is %s", rsp.b_id, rsp.b_resp.name()), UVM_HIGH )
+        `uvm_info ( "Get B Response", $sformatf("Response from ID(0x%h) is %s", rsp.b_id, rsp.b_resp.name()), UVM_MEDIUM )
     endtask
     
 endclass: axi_b_seq

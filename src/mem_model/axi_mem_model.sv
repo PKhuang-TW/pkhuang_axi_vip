@@ -58,7 +58,7 @@ class axi_mem_model extends uvm_object;
             `uvm_info(
                 "process_b_op",
                 $sformatf("Write TXN ID=0x%h completes", complete_id),
-                UVM_HIGH
+                UVM_MEDIUM
             )
         end
     endfunction
@@ -79,7 +79,7 @@ class axi_mem_model extends uvm_object;
             `uvm_info(
                 "process_r_op",
                 $sformatf("Read TXN ID=0x%h, read mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
-                UVM_HIGH
+                UVM_MEDIUM
             )
         end
     endfunction
@@ -118,7 +118,7 @@ class axi_mem_model extends uvm_object;
         `uvm_info(
             "clr_id_info",
             $sformatf("Clear %s TXN info_map for ID = 0x%h", op.name(), id),
-            UVM_HIGH
+            UVM_MEDIUM
         )
     endfunction
 

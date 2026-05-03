@@ -1,5 +1,5 @@
-+incdir+./test
 +incdir+./test/base
++incdir+./test
 +incdir+./src
 +incdir+./src/define
 +incdir+./src/seq

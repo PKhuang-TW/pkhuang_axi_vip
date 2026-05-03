@@ -23,13 +23,13 @@ package axi_vip_pkg;
     `include "axi_master_driver.sv"
     `include "axi_slave_driver.sv"
 
-    `include "axi_agent_base.sv"
-    `include "axi_master_agent.sv"
-    `include "axi_slave_agent.sv"
-
     `include "axi_master_sequencer.sv"
     `include "axi_slave_sequencer.sv"
     `include "axi_virtual_sequencer.sv"
+
+    `include "axi_agent_base.sv"
+    `include "axi_master_agent.sv"
+    `include "axi_slave_agent.sv"
 
     `include "axi_scoreboard.sv"
     `include "axi_env.sv"
@@ -37,12 +37,12 @@ package axi_vip_pkg;
     `include "axi_aw_seq.sv"
     `include "axi_w_seq.sv"
     `include "axi_b_seq.sv"
-    `include "axi_rand_rw_seq.sv"
+    `include "axi_slv_wr_seq.sv"
 
-    `include "axi_inorder_write_vseq.sv"
+    `include "axi_vseq_base.sv"
+    `include "axi_mst_inorder_wr_vseq.sv"
 
     `include "axi_test_base.sv"
-    `include "axi_rand_rw_test.sv"
     `include "test_axi_inorder_write_random.sv"
 
 endpackage

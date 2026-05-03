@@ -110,7 +110,6 @@ pkhuang_axi_vip/
 │   │   └── axi_mem_model.sv
 |   │
 │   ├── seq/
-│   │   ├── axi_rand_rw_seq.sv
 │   │   ├── axi_aw_seq.sv
 │   │   ├── axi_w_seq.sv
 │   │   └── axi_b_seq.sv
@@ -125,7 +124,7 @@ pkhuang_axi_vip/
 │   │   └── axi_slave_monitor.sv
 |   │
 │   ├── vseq/
-│   │   └── axi_inorder_write_vseq.sv
+│   │   └── axi_mst_inorder_wr_vseq.sv
 │   │
 │   ├── axi_env.sv
 │   ├── axi_if.sv

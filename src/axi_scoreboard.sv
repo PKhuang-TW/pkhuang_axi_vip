@@ -24,7 +24,7 @@ class axi_scoreboard extends uvm_scoreboard;
 
         case (txn.kind)
             AW_TXN: begin
-                `uvm_info("SCB", "Handle AW Signal", UVM_HIGH)
+                `uvm_info("SCB", "Handle AW Signal", UVM_MEDIUM)
                 mem_model.w_id_info_map.set_id_info (
                     .id(txn.aw_id),
                     .addr(txn.aw_addr),
@@ -36,7 +36,7 @@ class axi_scoreboard extends uvm_scoreboard;
             end
 
             W_TXN: begin
-                `uvm_info("SCB", "Handle W Signal", UVM_HIGH)
+                `uvm_info("SCB", "Handle W Signal", UVM_MEDIUM)
                 mem_model.process_w_op (
                     .id(txn.w_id),
                     .data(txn.w_data[0]),
@@ -57,7 +57,7 @@ class axi_scoreboard extends uvm_scoreboard;
                         $sformatf("Write TXN (ID=%0d) is not ready for Response yet!", txn.b_id)
                     )
                 end else begin  // PASS
-                    `uvm_info("SCB", "B Signal Completes!", UVM_HIGH)
+                    `uvm_info("SCB", "B Signal Completes!", UVM_MEDIUM)
                     mem_model.clr_id_info (
                         .op(WRITE),
                         .id(txn.b_id)
@@ -66,7 +66,7 @@ class axi_scoreboard extends uvm_scoreboard;
             end
 
             AR_TXN: begin
-                `uvm_info("SCB", "Handle AR Signal", UVM_HIGH)
+                `uvm_info("SCB", "Handle AR Signal", UVM_MEDIUM)
                 mem_model.r_id_info_map.set_id_info (
                     .id(txn.ar_id),
                     .addr(txn.ar_addr),
@@ -84,7 +84,7 @@ class axi_scoreboard extends uvm_scoreboard;
                         $sformatf("Read TXN Resp = %s while expected RSP_OKAY", txn.r_resp[0])
                     )
                 end else begin
-                    `uvm_info("SCB", "Handle R Signal", UVM_HIGH)
+                    `uvm_info("SCB", "Handle R Signal", UVM_MEDIUM)
                     mem_model.process_r_op (
                         .id(txn.r_id),
                         .data(data)

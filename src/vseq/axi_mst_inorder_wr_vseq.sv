@@ -1,8 +1,8 @@
-`ifndef AXI_INORDER_WRITE_VSEQ_SV
-`define AXI_INORDER_WRITE_VSEQ_SV
+`ifndef AXI_MST_INORDER_WR_VSEQ_SV
+`define AXI_MST_INORDER_WR_VSEQ_SV
 
-class axi_inorder_write_vseq extends uvm_sequence;
-    `uvm_object_utils(axi_inorder_write_vseq)
+class axi_mst_inorder_wr_vseq extends axi_vseq_base;
+    `uvm_object_utils(axi_mst_inorder_wr_vseq)
 
     `uvm_declare_p_sequencer(axi_virtual_sequencer)
 
@@ -16,12 +16,14 @@ class axi_inorder_write_vseq extends uvm_sequence;
         soft seq_num inside {[1:10]};
     }
 
-    function new(string name = "axi_inorder_write_vseq");
+    function new(string name = "axi_mst_inorder_wr_vseq");
         super.new(name);
-        `uvm_info ( get_full_name(), $sformatf("seq_num = %0d", seq_num), UVM_HIGH )
+        `uvm_info ( get_full_name(), $sformatf("seq_num = %0d", seq_num), UVM_MEDIUM )
     endfunction
 
     virtual task body();
+        super.body();
+        
         for ( int i=0; i<seq_num; i++ ) begin
             aw_seq = axi_aw_seq :: type_id :: create ("aw_seq");
             w_seq = axi_w_seq :: type_id :: create ("w_seq");

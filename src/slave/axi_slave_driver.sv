@@ -4,9 +4,13 @@
 class axi_slave_driver extends axi_driver_base;
     `uvm_component_utils(axi_slave_driver)
 
-    axi_mem_model               mem_model;
+    axi_mem_model                       mem_model;
 
-    virtual axi_if              vif;
+    uvm_analysis_port #(axi_seq_item)   aw_ap, w_ap;
+
+    axi_seq_item                        b_q[$];
+
+    virtual axi_if                      vif;
 
     function new ( string name = "axi_slave_driver", uvm_component parent );
         super.new(name, parent);
@@ -19,22 +23,26 @@ class axi_slave_driver extends axi_driver_base;
             `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
 
         mem_model = new("mem_model");
+        aw_ap = new("aw_ap", this);
+        w_ap = new("w_ap", this);
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
         fork
-            forever begin aw_signal_handler()       ;end
-            forever begin w_signal_handler()        ;end
-            forever begin b_signal_handler()        ;end
+            forever begin get_txn()                 ;end
+            forever begin listen_aw_channel()       ;end
+            forever begin listen_w_channel()        ;end
+            forever begin drive_b_channel()         ;end
             forever begin ar_signal_handler()       ;end
             forever begin r_signal_handler()        ;end
             forever begin reset_signal_handler()    ;end
         join
     endtask
 
-    extern virtual task aw_signal_handler();
-    extern virtual task w_signal_handler();
-    extern virtual task b_signal_handler();
+    extern virtual task get_txn();
+    extern virtual task listen_aw_channel();
+    extern virtual task listen_w_channel();
+    extern virtual task drive_b_channel();
     extern virtual task ar_signal_handler();
     extern virtual task r_signal_handler();
     extern virtual task reset_signal_handler();
@@ -55,87 +63,150 @@ task axi_slave_driver::wait_clk ( int cycle );
     repeat ( cycle ) @ ( vif.slv_cb );
 endtask
 
-task axi_slave_driver::aw_signal_handler();
+task axi_slave_driver::get_txn();
+    axi_seq_item    txn;
+
+    if ( vif.slv_cb.ARESETn === 1'b1 ) begin
+        txn = axi_seq_item :: type_id :: create ("txn");
+        seq_item_port.get_next_item(txn);
+
+        if ( txn.kind == B_TXN ) begin
+            `uvm_info("GET_TXN", $sformatf("Kind = %s, BID = 0x%h", txn.kind.name(), txn.b_id), UVM_MEDIUM )
+        end
+
+        case ( txn.kind )
+            B_TXN:      b_q.push_back(txn);        
+            // default:    `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()))
+        endcase
+        seq_item_port.item_done();
+    end else begin
+        wait_clk(1);
+    end
+endtask
+
+task axi_slave_driver::listen_aw_channel();
+    axi_seq_item    txn;
+
     begin
         @ (vif.slv_cb iff vif.slv_cb.AWVALID === 1'b1);
 
         `uvm_info (
-            "aw_signal_handler",
+            "listen_aw_channel",
             $sformatf("Handle AW Signal: ID = 0x%h", vif.slv_cb.AWID),
-            UVM_HIGH
+            UVM_MEDIUM
         )
-        mem_model.w_id_info_map.set_id_info (
-            .id(vif.slv_cb.AWID),
-            .addr(vif.slv_cb.AWADDR),
-            .len(vif.slv_cb.AWLEN),
-            .size(vif.slv_cb.AWSIZE),
-            .burst( burst_type_e'(vif.slv_cb.AWBURST) ),
-            .prot(vif.slv_cb.AWPROT)
-        );
+        // mem_model.w_id_info_map.set_id_info (
+        //     .id(vif.slv_cb.AWID),
+        //     .addr(vif.slv_cb.AWADDR),
+        //     .len(vif.slv_cb.AWLEN),
+        //     .size(vif.slv_cb.AWSIZE),
+        //     .burst( burst_type_e'(vif.slv_cb.AWBURST) ),
+        //     .prot(vif.slv_cb.AWPROT)
+        // );
 
+        txn = axi_seq_item::type_id::create("txn");
+        txn.kind        = AW_TXN;
+        txn.aw_id       = vif.slv_cb.AWID;
+        txn.aw_id       = vif.slv_cb.AWID;
+        txn.aw_addr     = vif.slv_cb.AWADDR;
+        txn.aw_len      = vif.slv_cb.AWLEN;
+        txn.aw_size     = vif.slv_cb.AWSIZE;
+        txn.aw_burst    = burst_type_e'(vif.slv_cb.AWBURST);
+        txn.aw_prot     = vif.slv_cb.AWPROT;
+        
         vif.slv_cb.AWREADY <= 0;
         wait_clk(1);
         reset_aw_signal();
-    end
-endtask : aw_signal_handler
 
-task axi_slave_driver::w_signal_handler();
+        aw_ap.write(txn);
+    end
+endtask : listen_aw_channel
+
+task axi_slave_driver::listen_w_channel();
+    axi_seq_item    txn;
+
     begin
-        wait ( vif.slv_cb.WVALID );
+        @ (vif.slv_cb iff vif.slv_cb.WVALID === 1'b1);
 
         `uvm_info(
-            "w_signal_handler",
+            "listen_w_channel",
             $sformatf("Handle W Signal: ID = 0x%h", vif.slv_cb.WID),
-            UVM_HIGH
+            UVM_MEDIUM
         )
 
-        fork
-            begin
-                mem_model.process_w_op (
-                    .id(vif.slv_cb.WID),
-                    .data(vif.slv_cb.WDATA),
-                    .strb(vif.slv_cb.WSTRB),
-                    .last(vif.slv_cb.WLAST)
-                );
-            end
-            begin
-                vif.slv_cb.WREADY <= 0;
-                wait_clk(1);
-            end
-        join
+        // fork
+        //     begin
+        //         mem_model.process_w_op (
+        //             .id(vif.slv_cb.WID),
+        //             .data(vif.slv_cb.WDATA),
+        //             .strb(vif.slv_cb.WSTRB),
+        //             .last(vif.slv_cb.WLAST)
+        //         );
+        //     end
+        //     begin
+        //         vif.slv_cb.WREADY <= 0;
+        //         wait_clk(1);
+        //     end
+        // join
 
-        reset_w_signal();
+        txn = axi_seq_item::type_id::create("txn");
+        txn.kind        = W_TXN;
+        txn.w_id       = vif.slv_cb.WID;
+
+        forever begin
+            if ( vif.slv_cb.WVALID === 1'b1 ) begin
+                vif.slv_cb.WREADY <= 0;
+                txn.w_data.push_back(vif.slv_cb.WDATA);
+                txn.w_strb.push_back(vif.slv_cb.WSTRB);
+            end
+            wait_clk(1);
+            reset_w_signal();
+            if ( vif.slv_cb.WLAST === 1'b1 ) break;
+        end
+
+        w_ap.write(txn);
     end
-endtask : w_signal_handler
+endtask : listen_w_channel
  
-task axi_slave_driver::b_signal_handler();
-    bit                     found_complete_id;
-    bit [`D_ID_WIDTH-1:0]   complete_id;
+task axi_slave_driver::drive_b_channel();
+    // bit                     found_complete_id;
+    // bit [`D_ID_WIDTH-1:0]   complete_id;
+    axi_seq_item    txn;
 
     begin
-        wait ( vif.slv_cb.BREADY && vif.slv_cb.ARESETn );
+        @ ( vif.slv_cb iff (vif.slv_cb.BREADY && vif.slv_cb.ARESETn) );
 
-        mem_model.process_b_op ( found_complete_id, complete_id );
-        if ( found_complete_id ) begin
-            `uvm_info(
-                "b_signal_handler",
-                $sformatf("Handle B Signal: ID = 0x%h", complete_id),
-                UVM_HIGH
-            )
-            vif.slv_cb.BRESP   <= RSP_OKAY;  // default okay
-            vif.slv_cb.BID     <= complete_id;
-            mem_model.clr_id_info (
-                .op(WRITE),
-                .id(complete_id)
-            );
-            vif.slv_cb.BVALID  <= 1;
-            wait_clk(1);
-            reset_b_signal();
-        end else begin
-            wait_clk(1);
-        end
+        wait ( b_q.size() );
+        txn = b_q.pop_front();
+
+        vif.slv_cb.BID      <= txn.b_id;
+        vif.slv_cb.BRESP    <= txn.b_resp;  // default okay
+        vif.slv_cb.BVALID   <= 1;
+
+        wait_clk(1);
+        reset_b_signal();
+
+        // mem_model.process_b_op ( found_complete_id, complete_id );
+        // if ( found_complete_id ) begin
+        //     `uvm_info(
+        //         "drive_b_channel",
+        //         $sformatf("Handle B Signal: ID = 0x%h", complete_id),
+        //         UVM_MEDIUM
+        //     )
+        //     vif.slv_cb.BRESP   <= RSP_OKAY;  // default okay
+        //     vif.slv_cb.BID     <= complete_id;
+        //     mem_model.clr_id_info (
+        //         .op(WRITE),
+        //         .id(complete_id)
+        //     );
+        //     vif.slv_cb.BVALID  <= 1;
+        //     wait_clk(1);
+        //     reset_b_signal();
+        // end else begin
+        //     wait_clk(1);
+        // end
     end
-endtask : b_signal_handler
+endtask : drive_b_channel
 
 task axi_slave_driver::ar_signal_handler();
     begin
@@ -144,7 +215,7 @@ task axi_slave_driver::ar_signal_handler();
         `uvm_info(
             "ar_signal_handler",
             $sformatf("Handle AR Signal: ID = 0x%h", vif.slv_cb.ARID),
-            UVM_HIGH
+            UVM_MEDIUM
         )
 
         mem_model.r_id_info_map.set_id_info (
@@ -179,7 +250,7 @@ task axi_slave_driver::r_signal_handler();
         `uvm_info (
             "r_signal_handler",
             $sformatf("Handle R Signal: ID = 0x%h", id),
-            UVM_HIGH
+            UVM_MEDIUM
         )
 
         mem_model.process_r_op ( id, data );
@@ -210,7 +281,7 @@ task axi_slave_driver::reset_signal_handler();
         `uvm_info(
             "reset_signal_handler",
             "Reset AXI slave signal!",
-            UVM_HIGH
+            UVM_MEDIUM
         )
         reset_axi_signal();
     end
