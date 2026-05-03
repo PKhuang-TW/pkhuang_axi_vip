@@ -1,8 +1,8 @@
-+incdir+./seq
 +incdir+./test
 +incdir+./test/base
 +incdir+./src
 +incdir+./src/define
++incdir+./src/seq
 +incdir+./src/master
 +incdir+./src/slave
 +incdir+./src/mem_model

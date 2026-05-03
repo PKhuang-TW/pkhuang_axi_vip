@@ -79,10 +79,6 @@ Use slave VIP to respond to a DUT master, with stimulus monitored via passive ag
 
 ```
 pkhuang_axi_vip/
-|
-├── seq/
-│   ├── axi_aw_seq.sv
-│   └── axi_rand_rw_seq.sv
 │
 ├── tb/
 │   └── sim_top.sv
@@ -110,6 +106,10 @@ pkhuang_axi_vip/
 │   ├── mem_model/
 │   │   ├── axi_id_info_map.sv
 │   │   └── axi_mem_model.sv
+|   │
+│   ├── seq/
+│   │   ├── axi_rand_rw_seq.sv
+│   │   └── axi_write_seq.sv
 │   │
 │   ├── package/
 │   │   └── axi_vip_pkg.svh
