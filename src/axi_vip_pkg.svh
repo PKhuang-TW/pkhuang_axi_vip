@@ -41,9 +41,11 @@ package axi_vip_pkg;
 
     `include "axi_vseq_base.sv"
     `include "axi_mst_inorder_wr_vseq.sv"
+    `include "axi_mst_outstanding_wr_vseq.sv"
 
     `include "axi_test_base.sv"
     `include "test_axi_inorder_write_random.sv"
+    `include "test_axi_outstanding_write_random.sv"
 
 endpackage
 

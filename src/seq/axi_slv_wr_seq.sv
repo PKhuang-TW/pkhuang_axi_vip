@@ -19,9 +19,9 @@ class axi_slv_wr_seq extends uvm_sequence;
                 p_sequencer.w_fifo.get(w_req);
             join
 
-            // ===================================
-            // handle memory model operation here
-            // ===================================
+            // ========================================
+            // TODO: handle memory model operation here
+            // ========================================
 
             b_rsp = axi_seq_item :: type_id :: create("b_rsp");
 

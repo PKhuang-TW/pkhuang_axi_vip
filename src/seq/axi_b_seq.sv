@@ -4,7 +4,7 @@
 class axi_b_seq extends uvm_sequence #(axi_seq_item);;
     `uvm_object_utils(axi_b_seq)
 
-    rand axi_seq_item   txn, rsp;
+    axi_seq_item   txn, rsp;
 
     function new(string name = "axi_b_seq");
         super.new(name);

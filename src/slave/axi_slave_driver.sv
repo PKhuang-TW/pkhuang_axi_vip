@@ -33,8 +33,8 @@ class axi_slave_driver extends axi_driver_base;
             forever begin listen_aw_channel()       ;end
             forever begin listen_w_channel()        ;end
             forever begin drive_b_channel()         ;end
-            forever begin ar_signal_handler()       ;end
-            forever begin r_signal_handler()        ;end
+            forever begin listen_ar_channel()       ;end
+            forever begin drive_r_channel()        ;end
             forever begin reset_signal_handler()    ;end
         join
     endtask
@@ -43,8 +43,8 @@ class axi_slave_driver extends axi_driver_base;
     extern virtual task listen_aw_channel();
     extern virtual task listen_w_channel();
     extern virtual task drive_b_channel();
-    extern virtual task ar_signal_handler();
-    extern virtual task r_signal_handler();
+    extern virtual task listen_ar_channel();
+    extern virtual task drive_r_channel();
     extern virtual task reset_signal_handler();
 
     extern virtual task reset_aw_signal();
@@ -208,12 +208,12 @@ task axi_slave_driver::drive_b_channel();
     end
 endtask : drive_b_channel
 
-task axi_slave_driver::ar_signal_handler();
+task axi_slave_driver::listen_ar_channel();
     begin
         wait ( vif.slv_cb.ARVALID );
 
         `uvm_info(
-            "ar_signal_handler",
+            "listen_ar_channel",
             $sformatf("Handle AR Signal: ID = 0x%h", vif.slv_cb.ARID),
             UVM_MEDIUM
         )
@@ -233,9 +233,9 @@ task axi_slave_driver::ar_signal_handler();
         wait_clk(1);
         reset_ar_signal();
     end
-endtask : ar_signal_handler
+endtask : listen_ar_channel
 
-task axi_slave_driver::r_signal_handler();
+task axi_slave_driver::drive_r_channel();
     bit [`D_ID_WIDTH-1:0]    id;
     bit [7:0]                len;
     bit [`D_DATA_WIDTH-1:0]  data;
@@ -248,7 +248,7 @@ task axi_slave_driver::r_signal_handler();
         id = mem_model.r_id_info_map.get_rand_id();
 
         `uvm_info (
-            "r_signal_handler",
+            "drive_r_channel",
             $sformatf("Handle R Signal: ID = 0x%h", id),
             UVM_MEDIUM
         )
@@ -273,7 +273,7 @@ task axi_slave_driver::r_signal_handler();
         wait ( vif.slv_cb.RREADY );
         reset_r_signal();
     end
-endtask : r_signal_handler
+endtask : drive_r_channel
 
 task axi_slave_driver::reset_signal_handler();
     begin
