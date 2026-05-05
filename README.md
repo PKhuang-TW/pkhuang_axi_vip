@@ -77,6 +77,12 @@ Use slave VIP to respond to a DUT master, with stimulus monitored via passive ag
 
 ---
 
+## 📷 AXI Block Diagram
+
+![AXI Diagram](AXI_diagram.png)
+
+---
+
 ```
 pkhuang_axi_vip/
 │
