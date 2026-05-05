@@ -86,7 +86,7 @@ task axi_master_driver::get_txn();
             AW_TXN:     aw_q.push_back(txn);
             W_TXN:      w_q.push_back(txn);
             B_TXN:      b_q.push_back(txn);
-            AR_TXN:     ar_q.push_back(txn);            
+            AR_TXN:     ar_q.push_back(txn);
             default:    `uvm_error("DRV", $sformatf("Unsupported txn.kind: %s", txn.kind.name()))
         endcase
         seq_item_port.item_done();
@@ -113,7 +113,7 @@ task axi_master_driver::drive_aw_txn();
 
         `uvm_info (
             "drive_aw_txn",
-            $sformatf("ID=0x%h, ARADDR=0x%h, ARLEN=%0d, ARSIZE=%0d, ARBURST=%s", txn.aw_id, txn.aw_addr[0], txn.aw_len, txn.aw_size, txn.aw_burst.name()),
+            $sformatf("ID=0x%h, AWADDR=0x%h, AWLEN=%0d, AWSIZE=%0d, AWBURST=%s", txn.aw_id, txn.aw_addr[0], txn.aw_len, txn.aw_size, txn.aw_burst.name()),
             UVM_MEDIUM
         )
         
