@@ -4,6 +4,8 @@
 class axi_driver_base extends uvm_driver #(axi_seq_item);
     `uvm_component_utils(axi_driver_base)
 
+    virtual axi_if      vif;
+
     function new ( string name = "axi_driver_base", uvm_component parent );
         super.new(name, parent);
     endfunction

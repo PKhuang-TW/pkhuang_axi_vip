@@ -4,7 +4,6 @@
 class axi_master_driver extends axi_driver_base;
     `uvm_component_utils(axi_master_driver)
 
-    virtual axi_if          vif;
     axi_seq_item            aw_q[$], w_q[$], b_q[$], ar_q[$], r_q[$];
 
     function new ( string name = "axi_master_driver", uvm_component parent );
@@ -13,9 +12,6 @@ class axi_master_driver extends axi_driver_base;
 
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
-
-        if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )
-            `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
