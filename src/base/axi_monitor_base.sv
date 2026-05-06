@@ -21,6 +21,9 @@ class axi_monitor_base extends uvm_monitor;
 
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
+
+        if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )
+            `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
     
     task wait_clk ( int cycle );

@@ -8,8 +8,6 @@ class axi_agent_base extends uvm_agent;
     axi_monitor_base        mon;
     axi_seqr_base           seqr;
 
-    virtual axi_if          vif;
-
     function new ( string name = "axi_agent_base", uvm_component parent );
         super.new(name, parent);
     endfunction
@@ -20,16 +18,10 @@ class axi_agent_base extends uvm_agent;
         drv =   axi_driver_base :: type_id :: create ("drv", this);
         mon =   axi_monitor_base :: type_id :: create ("mon", this);
         seqr =  axi_seqr_base :: type_id :: create ("seqr", this);
-
-        if ( !uvm_config_db #(virtual axi_if) :: get (this, "", "vif", vif) )
-            `uvm_error("NOCFG", $sformatf("No vif is set for %s.vif", get_full_name()) )
     endfunction
 
     function void connect_phase (uvm_phase phase);
         super.connect_phase(phase);
-        drv.vif     = vif;
-        mon.vif     = vif;
-        seqr.vif    = vif;
         drv.seq_item_port.connect ( seqr.seq_item_export );
     endfunction
 
