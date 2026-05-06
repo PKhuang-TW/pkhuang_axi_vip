@@ -20,7 +20,7 @@ class axi_master_agent extends axi_agent_base;
         //     "*agt_mst.*"
         // );
 
-        uvm_sequencer#(axi_seq_item)::type_id::set_inst_override(
+        axi_seqr_base::type_id::set_inst_override(
             axi_master_sequencer::get_type(),
             "seqr",
             this

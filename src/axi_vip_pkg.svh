@@ -23,6 +23,7 @@ package axi_vip_pkg;
     `include "axi_master_driver.sv"
     `include "axi_slave_driver.sv"
 
+    `include "axi_seqr_base.sv"
     `include "axi_master_sequencer.sv"
     `include "axi_slave_sequencer.sv"
     `include "axi_virtual_sequencer.sv"

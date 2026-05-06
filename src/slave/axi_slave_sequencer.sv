@@ -1,7 +1,7 @@
 `ifndef AXI_SLAVE_SEQUENCER_SV
 `define AXI_SLAVE_SEQUENCER_SV
 
-class axi_slave_sequencer extends uvm_sequencer #(axi_seq_item);
+class axi_slave_sequencer extends axi_seqr_base;
     `uvm_component_utils(axi_slave_sequencer)
 
     uvm_tlm_analysis_fifo #(axi_seq_item)   aw_fifo, w_fifo;
