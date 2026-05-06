@@ -4,7 +4,9 @@
 class axi_test_base extends uvm_test;
     `uvm_component_utils(axi_test_base)
 
-    axi_env         env;
+    axi_env             env;
+
+    axi_slv_wr_seq      slv_wr_seq;
 
     function new ( string name = "axi_test_base", uvm_component parent );
         super.new(name, parent);
@@ -20,6 +22,13 @@ class axi_test_base extends uvm_test;
         uvm_top.print_topology();
         uvm_factory::get().print();
     endfunction
+
+    virtual task run_phase ( uvm_phase phase );
+        phase.raise_objection(this);
+        slv_wr_seq = axi_slv_wr_seq :: type_id :: create ("slv_wr_seq");
+        slv_wr_seq.start ( env.vseqr.seqr_slv );
+        phase.drop_objection(this);
+    endtask
 
 endclass
 

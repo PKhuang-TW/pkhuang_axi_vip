@@ -11,6 +11,7 @@ class test_axi_outstanding_write_random extends axi_test_base;
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
+        super.run_phase(phase);
         phase.raise_objection(this);
         w_vseq = axi_mst_outstanding_wr_vseq :: type_id :: create ("w_vseq");
 

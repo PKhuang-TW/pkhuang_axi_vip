@@ -6,18 +6,12 @@ class axi_mst_outstanding_wr_vseq extends axi_vseq_base;
 
     `uvm_declare_p_sequencer(axi_virtual_sequencer)
 
-    rand int        seq_num;
-
     axi_aw_seq      aw_seq;
     axi_w_seq       w_seq;
     axi_b_seq       b_seq;
 
     axi_seq_item    aw_txn, w_txn, b_txn;
     axi_seq_item    aw_txn_q[$], w_txn_q[$], b_rsp_q[$];
-
-    constraint num_cns {
-        soft seq_num inside {[1:10]};
-    }
 
     function new(string name = "axi_mst_outstanding_wr_vseq");
         super.new(name);
@@ -108,8 +102,7 @@ class axi_mst_outstanding_wr_vseq extends axi_vseq_base;
                 end else if (i >= sort_rcv_q.size()) begin
                     `uvm_error("COMPARE_ID", $sformatf("Missing in Rcv: 'h%0x", sort_exp_q[i]))
                 end else if (sort_exp_q[i] !== sort_rcv_q[i]) begin
-                    `uvm_error("COMPARE_ID", $sformatf("Mismatch at sorted index %0d: Exp = 'h%0x, Rcv = 'h%0x", 
-                                                    i, sort_exp_q[i], sort_rcv_q[i]))
+                    `uvm_error("COMPARE_ID", $sformatf("Mismatch at sorted index %0d: Exp = 'h%0x, Rcv = 'h%0x", i, sort_exp_q[i], sort_rcv_q[i]))
                 end
             end
         end
