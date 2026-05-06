@@ -40,7 +40,7 @@ class axi_master_monitor extends axi_monitor_base;
             aw_ap.write(aw_txn);
 
             `uvm_info (
-                "monitor_mst_aw",
+                "monitor_slv_aw",
                 $sformatf("Monitor AW Signal: ID = 0x%h", vif.mon_cb.AWID),
                 UVM_MEDIUM
             )

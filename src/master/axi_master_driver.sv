@@ -163,7 +163,7 @@ task axi_master_driver::listen_b_txn();
         rsp.set_id_info(txn);
         rsp.kind = B_TXN;
         rsp.b_id = vif.mst_cb.BID;
-        $cast(txn.b_resp, vif.mst_cb.BRESP);
+        $cast(rsp.b_resp, vif.mst_cb.BRESP);
         vif.mst_cb.BREADY <= 0;
 
         wait_clk(1);
