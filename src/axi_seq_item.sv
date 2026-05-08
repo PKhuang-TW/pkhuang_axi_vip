@@ -72,8 +72,8 @@ class axi_seq_item extends uvm_sequence_item;
     }
 
     constraint c_size {
-        aw_size <= MAX_TXN_SIZE;
-        ar_size <= MAX_TXN_SIZE;
+        ( 1 << aw_size ) <= `D_DATA_WIDTH / 8;
+        ( 1 << ar_size ) <= `D_DATA_WIDTH / 8;
     }
 
     constraint c_write_data_size {
@@ -84,6 +84,11 @@ class axi_seq_item extends uvm_sequence_item;
     constraint c_mem_overflow {
         aw_addr inside { [0:`D_MEM_SIZE-1] };
         ar_addr inside { [0:`D_MEM_SIZE-1] };
+    }
+
+    constraint c_4k_boundary {
+        ((aw_addr & 12'hFFF) + ((aw_len + 1) << aw_size)) <= 4096;
+        ((ar_addr & 12'hFFF) + ((ar_len + 1) << ar_size)) <= 4096;
     }
 
     `uvm_object_utils_begin(axi_seq_item)
@@ -117,6 +122,43 @@ class axi_seq_item extends uvm_sequence_item;
     function new(string name = "axi_seq_item");
         super.new(name);
     endfunction: new
+    
+    // Calculate WSTRB for each beat according to AWADDR, AWSIZE, AWLEN and AWBURST
+    virtual function void post_randomize();
+        int align_addr;
+        int container_num;
+        int awaddr_container_idx;
+        int tsfr_size_per_beat;
+        bit[(`D_DATA_WIDTH>>3)-1:0] strb_mask;
+        
+        tsfr_size_per_beat = 1 << aw_size;
+
+        align_addr = aw_addr / tsfr_size_per_beat * tsfr_size_per_beat;
+        container_num = (`D_DATA_WIDTH >> 3) / tsfr_size_per_beat;
+        awaddr_container_idx = ( aw_addr % align_addr ) / tsfr_size_per_beat;
+
+        for ( int i=0; i<(aw_len+1); i++ ) begin
+            
+            strb_mask = `1;
+
+            if ( aw_burst == BURST_TYPE_FIXED ) begin
+                strb_mask &= ( ( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
+                
+                if ( aw_addr % align_addr ) begin  // TODO: align_addr == 0 would cause issue here
+                    strb_mask[ (aw_addr % align_addr)-1 : 0] = 0;  // TODO: align_addr == 0 would cause issue here
+                end
+            end else begin
+                strb_mask &= ( ( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_num ) * tsfr_size_per_beat );
+                
+                if ( (i == 0) && (aw_addr % align_addr) ) begin  // TODO: align_addr == 0 would cause issue here
+                    strb_mask[ (aw_addr % align_addr)-1 : 0] = 0;  // TODO: align_addr == 0 would cause issue here
+                end
+            end
+
+            w_strb[i] &= strb_mask;
+        end
+
+    endfunction: post_randomize
     
 endclass: axi_seq_item
 

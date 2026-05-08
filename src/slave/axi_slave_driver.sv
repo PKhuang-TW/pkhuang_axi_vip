@@ -4,7 +4,7 @@
 class axi_slave_driver extends axi_driver_base;
     `uvm_component_utils(axi_slave_driver)
 
-    axi_mem_model                       mem_model;
+    // axi_mem_model                       mem_model;
 
     uvm_analysis_port #(axi_seq_item)   aw_ap, w_ap;
 
@@ -17,7 +17,7 @@ class axi_slave_driver extends axi_driver_base;
     function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        mem_model = new("mem_model");
+        // mem_model = new("mem_model");
         aw_ap = new("aw_ap", this);
         w_ap = new("w_ap", this);
     endfunction
@@ -213,14 +213,14 @@ task axi_slave_driver::listen_ar_channel();
             UVM_MEDIUM
         )
 
-        mem_model.r_id_info_map.set_id_info (
-            .id(vif.slv_cb.ARID),
-            .addr(vif.slv_cb.ARADDR),
-            .len(vif.slv_cb.ARLEN),
-            .size(vif.slv_cb.ARSIZE),
-            .burst( burst_type_e'(vif.slv_cb.ARBURST) ),
-            .prot(vif.slv_cb.ARPROT)
-        );
+        // mem_model.r_id_info_map.set_id_info (
+        //     .id(vif.slv_cb.ARID),
+        //     .addr(vif.slv_cb.ARADDR),
+        //     .len(vif.slv_cb.ARLEN),
+        //     .size(vif.slv_cb.ARSIZE),
+        //     .burst( burst_type_e'(vif.slv_cb.ARBURST) ),
+        //     .prot(vif.slv_cb.ARPROT)
+        // );
 
         // r_q.push_back(vif.slv_cb.ARID);
 

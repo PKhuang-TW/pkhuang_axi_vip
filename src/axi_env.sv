@@ -10,8 +10,11 @@ class axi_env extends uvm_env;
 
     axi_scoreboard          scb;
 
+    axi_mem_model           mem;
+
     function new (string name = "axi_env", uvm_component parent );
         super.new(name, parent);
+        mem = new("mem");
     endfunction
 
     function void build_phase (uvm_phase phase);
@@ -21,6 +24,10 @@ class axi_env extends uvm_env;
         vseqr = axi_virtual_sequencer :: type_id :: create("vseqr", this);
 
         scb = axi_scoreboard :: type_id :: create ("scb", this);
+
+        mem = axi_mem_model :: type_id :: create ("mem");
+
+        uvm_config_db #(axi_mem_model) :: set (this, "*", "mem", mem);
     endfunction
 
     function void connect_phase ( uvm_phase phase );

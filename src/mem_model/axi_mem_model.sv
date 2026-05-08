@@ -1,127 +1,108 @@
 `ifndef AXI_SLAVE_MEM_MODEL_SV
 `define AXI_SLAVE_MEM_MODEL_SV
 
+typedef bit [`D_ADDR_WIDTH-1:0] addr_q_t[$];
+
 class axi_mem_model extends uvm_object;
     `uvm_object_utils(axi_mem_model)
     
     bit [`D_MEM_SIZE-1:0][7:0]      mem;
-    bit [`D_MEM_SIZE-1:0]           mem_lock;
-    axi_id_info_map                 r_id_info_map, w_id_info_map;
+    bit [`D_MEM_SIZE-1:0]           rc_lock;
 
-    function new ( string name = "axi_mem_model" );
+    function new ( string name = "name" );
         super.new(name);
-        r_id_info_map = new();
-        w_id_info_map = new();
     endfunction
 
-    virtual function void process_w_op (
-        bit [`D_ID_WIDTH-1:0]           id,
-        bit [`D_DATA_WIDTH-1:0]         data,
-        bit [(`D_DATA_WIDTH>>3)-1:0]    strb,
-        bit                             last
-    );
-        bit [2:0]                       size;
-        bit [`D_ADDR_WIDTH-1:0]         addr;
+    extern virtual function void display_mem();
+    extern virtual function addr_q_t get_addr_q ( axi_seq_item aw_txn );
+    extern virtual task handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
 
-        size = w_id_info_map.size[id];
-        addr = w_id_info_map.addr_q[id].pop_front();
+    extern virtual function void narrow_tsfr_handler();
+    extern virtual function void full_tsfr_handler();
+    extern virtual function void align_container_handler();
 
-        for ( bit [`D_ADDR_WIDTH-1:0] i=0; i<(1 << size); i++ ) begin
-            if ( (strb >> i) & 1'b1 ) begin
-                mem[addr + i] = data[7+8*i -: 8];
+endclass : axi_mem_model
 
-                `uvm_info(
-                    "process_w_op",
-                    $sformatf("Write TXN ID=0x%h, write mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
-                    UVM_HIGH
-                )
-            end else begin
-                `uvm_info(
-                    "process_w_op",
-                    $sformatf("Write TXN ID=0x%h, write mem[0x%h] = 0x00 done!", id, (addr+i)),
-                    UVM_HIGH
-                )
+virtual function void axi_mem_model::display_mem();
+    string row_str;
+    int addr;
+    
+    `uvm_info("MEM_DUMP", "------------------ Memory Dump (16 bytes/row) ------------------", UVM_LOW)        
+    for (int i = 0; i < `D_MEM_SIZE; i += 16) begin
+        row_str = $sformatf("Addr 0x%05h: ", i);
+        
+        for (int j = 0; j < 16; j++) begin
+            addr = i + j;
+            if (addr < `D_MEM_SIZE) begin
+                row_str = {row_str, $sformatf("%02h ", mem[addr])};
+            end
+        end
+        
+        `uvm_info("MEM_DUMP", row_str, UVM_LOW)
+    end
+    `uvm_info("MEM_DUMP", "----------------------------------------------------------------", UVM_LOW)
+endfunction
+
+virtual function addr_q_t axi_mem_model::get_addr_q ( axi_seq_item aw_txn );
+
+    bit [`D_ADDR_WIDTH-1:0]         addr;
+    bit [7:0]                       len;
+    bit [2:0]                       size;
+    burst_type_e                    burst;
+    addr_q_t                        addr_q;
+    bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
+    bit [`D_MEM_ADDR_WIDTH-1:0]     wrap_boundary;
+
+    addr    = aw_txn.aw_addr;
+    len     = aw_txn.aw_len;
+    size    = aw_txn.aw_size;
+    burst   = aw_txn.aw_burst;
+
+    case ( burst )
+        BURST_TYPE_FIXED: begin
+            for ( bit [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+                addr_q.push_back(addr);
             end
         end
 
-        if ( last )
-            w_id_info_map.complete[id] = 1;
-    endfunction
-
-    virtual function void  process_b_op (
-        output bit                      found_complete_id,
-        output bit [`D_ID_WIDTH-1:0]    complete_id
-    );
-        found_complete_id = w_id_info_map.scan_complete_id ( complete_id );
-
-        if ( found_complete_id ) begin
-            `uvm_info(
-                "process_b_op",
-                $sformatf("Write TXN ID=0x%h completes", complete_id),
-                UVM_MEDIUM
-            )
-        end
-    endfunction
-
-    virtual function void process_r_op (
-        input  bit [`D_ID_WIDTH-1:0]    id,
-        output bit [`D_DATA_WIDTH-1:0]  data
-    );
-        bit [2:0]                   size;
-        bit[`D_ADDR_WIDTH-1:0]      addr;
-
-        size = r_id_info_map.size[id];
-        addr = r_id_info_map.addr_q[id].pop_front();
-
-        for ( int i=0; i<(1 << size); i++ ) begin
-            data[7+8*i -: 8] = mem[addr + i];
-
-            `uvm_info(
-                "process_r_op",
-                $sformatf("Read TXN ID=0x%h, read mem[0x%h] = 0x%h done!", id, (addr+i), data[7+8*i -: 8]),
-                UVM_MEDIUM
-            )
-        end
-    endfunction
-
-    virtual function void clr_id_info (
-        operation_e                 op,
-        bit [`D_ID_WIDTH-1:0]       id
-    );
-        bit [`D_ADDR_WIDTH-1:0]     start_addr;
-        axi_id_info_map             id_info_map;
-
-        if ( op == WRITE ) begin
-            id_info_map = w_id_info_map;
-        end else if ( op == READ ) begin
-            id_info_map = r_id_info_map;
-        end
-
-        // // Set lock to prevent w/r race condition
-        // for ( int transfer_idx=0; transfer_idx<=len; transfer_idx++) begin
-        //     start_addr = id_info_map.get_addr_by_id_idx(.id(id), .idx(transfer_idx));
-        //     for ( int byte_idx=0; byte_idx<(1<<size); byte_idx++) begin
-        //         mem_lock[start_addr + byte_idx] = 1;
-        //     end
-        // end
-
-        // Clear mem lock
-        for ( int transfer_idx=0; transfer_idx<=id_info_map.len[id]; transfer_idx++) begin
-            start_addr = id_info_map.get_addr_by_id_idx(.id(id), .idx(transfer_idx));
-            for ( int byte_idx=0; byte_idx<(1<<id_info_map.size[id]); byte_idx++) begin
-                mem_lock[start_addr + byte_idx] = 0;
+        BURST_TYPE_INCR: begin
+            for ( bit [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+                addr_q.push_back( addr + (i * (1 << size)) );
             end
         end
 
-        id_info_map.clr_id_info(id);
+        BURST_TYPE_WRAP: begin
+            total_size      = ( len + 1 ) * ( 1 << size );
+            wrap_boundary   = ( addr / total_size ) * total_size;
+            for ( bit [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+                addr_q.push_back(
+                    ( addr - wrap_boundary + i * (1<<size) ) % total_size
+                );
+            end
+        end
 
-        `uvm_info(
-            "clr_id_info",
-            $sformatf("Clear %s TXN info_map for ID = 0x%h", op.name(), id),
-            UVM_MEDIUM
-        )
-    endfunction
+        default: begin
+            `uvm_error ("ERROR", $sformatf("Unexpected TXN burst type! (%0d)", burst) )
+        end
+    endcase
 
-endclass
+    return addr_q;
+endfunction
+
+virtual task axi_mem_model::handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
+
+    addr_q_t                addr_q;
+    int                     size_per_beat;
+    bit[`D_DATA_WIDTH-1:0]  tmp_data;
+
+    addr_q = get_addr_q(aw_txn);
+    size_per_beat = 1 << aw_txn.aw_size;
+
+    for ( int idx=0; idx<=aw_txn.aw_len; idx++ ) begin
+        tmp_data = w_txn.w_data.pop_front();
+        mem[addr_q.pop_front() +: (size_per_beat << 3)] = w_txn.w_data.pop_front();
+    end
+    display_mem();
+endtask
 
 `endif
