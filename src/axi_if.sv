@@ -7,7 +7,7 @@ interface axi_if;
 
     // ----------- Write Address -----------
     logic [`D_ID_WIDTH-1:0]         AWID;
-    logic [`D_ADDR_WIDTH-1:0]       AWADDR;
+    logic [`D_ADDR_WIDTH_BIT-1:0]       AWADDR;
     logic [7:0]                     AWLEN;
     logic [2:0]                     AWSIZE;
     logic [1:0]                     AWBURST;
@@ -17,8 +17,8 @@ interface axi_if;
 
     // ----------- Write Data -----------
     logic [`D_ID_WIDTH-1:0]         WID;
-    logic [`D_DATA_WIDTH-1:0]       WDATA;
-    logic [(`D_DATA_WIDTH>>3)-1:0]  WSTRB;
+    logic [`D_DATA_WIDTH_BIT-1:0]       WDATA;
+    logic [(`D_DATA_WIDTH_BIT>>3)-1:0]  WSTRB;
     logic                           WLAST;
     logic                           WVALID;
     logic                           WREADY;
@@ -31,7 +31,7 @@ interface axi_if;
 
     // ----------- Read Address -----------
     logic [`D_ID_WIDTH-1:0]         ARID;
-    logic [`D_ADDR_WIDTH-1:0]       ARADDR;
+    logic [`D_ADDR_WIDTH_BIT-1:0]       ARADDR;
     logic [7:0]                     ARLEN;
     logic [2:0]                     ARSIZE;
     logic [1:0]                     ARBURST;
@@ -41,7 +41,7 @@ interface axi_if;
 
     // ----------- Read Data -----------
     logic [`D_ID_WIDTH-1:0]         RID;
-    logic [`D_DATA_WIDTH-1:0]       RDATA;
+    logic [`D_DATA_WIDTH_BIT-1:0]       RDATA;
     logic [1:0]                     RRESP;
     logic                           RLAST;
     logic                           RVALID;

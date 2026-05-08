@@ -233,7 +233,7 @@ endtask : listen_ar_channel
 task axi_slave_driver::drive_r_channel();
     bit [`D_ID_WIDTH-1:0]    id;
     bit [7:0]                len;
-    bit [`D_DATA_WIDTH-1:0]  data;
+    bit [`D_DATA_WIDTH_BIT-1:0]  data;
     bit                      found_complete_id;
 
     begin

@@ -13,15 +13,15 @@ class axi_seq_item extends uvm_sequence_item;
     // Write 
     //-----------------------------------------------------------
     rand bit[`D_ID_WIDTH-1:0]           aw_id;
-    rand bit[`D_ADDR_WIDTH-1:0]         aw_addr;
+    rand bit[`D_ADDR_WIDTH_BIT-1:0]         aw_addr;
     rand bit[7:0]                       aw_len;
     rand bit[2:0]                       aw_size;
     rand burst_type_e                   aw_burst;
     rand prot_s                         aw_prot;
 
     rand bit[`D_ID_WIDTH-1:0]           w_id;
-    rand bit[`D_DATA_WIDTH-1:0]         w_data[$];
-    rand bit[(`D_DATA_WIDTH>>3)-1:0]    w_strb[$];
+    rand bit[`D_DATA_WIDTH_BIT-1:0]         w_data[$];
+    rand bit[(`D_DATA_WIDTH_BIT>>3)-1:0]    w_strb[$];
     bit                                 w_last;
 
     bit[`D_ID_WIDTH-1:0]                b_id;
@@ -33,19 +33,19 @@ class axi_seq_item extends uvm_sequence_item;
     // Read 
     //-----------------------------------------------------------
     rand bit[`D_ID_WIDTH-1:0]           ar_id;
-    rand bit[`D_ADDR_WIDTH-1:0]         ar_addr;
+    rand bit[`D_ADDR_WIDTH_BIT-1:0]         ar_addr;
     rand bit[7:0]                       ar_len;
     rand bit[2:0]                       ar_size;
     rand burst_type_e                   ar_burst;
     rand prot_s                         ar_prot;
 
     bit[`D_ID_WIDTH-1:0]                r_id;
-    bit[`D_DATA_WIDTH-1:0]              r_data[$];
+    bit[`D_DATA_WIDTH_BIT-1:0]              r_data[$];
     bit                                 r_last;
     rsp_e                               r_resp[$];
     rsp_e                               exp_r_resp[$];
 
-    localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH / 8) : `D_MEM_SIZE;
+    localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH_BIT / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH_BIT / 8) : `D_MEM_SIZE;
 
     //-----------------------------------------------------------
     
@@ -72,8 +72,8 @@ class axi_seq_item extends uvm_sequence_item;
     }
 
     constraint c_size {
-        ( 1 << aw_size ) <= `D_DATA_WIDTH / 8;
-        ( 1 << ar_size ) <= `D_DATA_WIDTH / 8;
+        ( 1 << aw_size ) <= `D_DATA_WIDTH_BIT / 8;
+        ( 1 << ar_size ) <= `D_DATA_WIDTH_BIT / 8;
     }
 
     constraint c_write_data_size {
@@ -125,35 +125,67 @@ class axi_seq_item extends uvm_sequence_item;
     
     // Calculate WSTRB for each beat according to AWADDR, AWSIZE, AWLEN and AWBURST
     virtual function void post_randomize();
-        int align_addr;
-        int container_num;
-        int awaddr_container_idx;
-        int tsfr_size_per_beat;
-        bit[(`D_DATA_WIDTH>>3)-1:0] strb_mask;
         
-        tsfr_size_per_beat = 1 << aw_size;
+        bit[`D_ADDR_WIDTH_BIT-1:0]          align_addr, wrap_boundary_addr;
+        bit[`D_ADDR_WIDTH_BYTE_2n-1:0]      tsfr_size_per_beat, wrap_size;
 
-        align_addr = aw_addr / tsfr_size_per_beat * tsfr_size_per_beat;
-        container_num = (`D_DATA_WIDTH >> 3) / tsfr_size_per_beat;
-        awaddr_container_idx = ( aw_addr % align_addr ) / tsfr_size_per_beat;
+        bit[`D_DATA_WIDTH_BYTE-1:0]         strb_mask;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      container_num, wrap_container_num;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      awaddr_container_idx;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      offset;
+
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      wrap_boundary_container_idx;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      start_offset_containers;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      current_container;
+        
+        tsfr_size_per_beat      = `D_DATA_WIDTH_BYTE'(1 << aw_size);
+
+        awaddr_container_idx    = ( aw_addr % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
+        align_addr              = (aw_addr / tsfr_size_per_beat) * tsfr_size_per_beat;
+        offset                  = aw_addr % tsfr_size_per_beat;
+        container_num           = `D_DATA_WIDTH_BYTE / tsfr_size_per_beat;
 
         for ( int i=0; i<(aw_len+1); i++ ) begin
             
             strb_mask = `1;
 
-            if ( aw_burst == BURST_TYPE_FIXED ) begin
-                strb_mask &= ( ( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
-                
-                if ( aw_addr % align_addr ) begin  // TODO: align_addr == 0 would cause issue here
-                    strb_mask[ (aw_addr % align_addr)-1 : 0] = 0;  // TODO: align_addr == 0 would cause issue here
+            case ( aw_burst )
+                BURST_TYPE_FIXED: begin
+                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
+                    
+                    if ( offset > 0 ) begin
+                        strb_mask[ offset-1 : 0] = 0;
+                    end
                 end
-            end else begin
-                strb_mask &= ( ( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_num ) * tsfr_size_per_beat );
-                
-                if ( (i == 0) && (aw_addr % align_addr) ) begin  // TODO: align_addr == 0 would cause issue here
-                    strb_mask[ (aw_addr % align_addr)-1 : 0] = 0;  // TODO: align_addr == 0 would cause issue here
+
+                BURST_TYPE_INCR: begin
+                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_num ) * tsfr_size_per_beat );
+                    
+                    if ( (i == 0) && (offset > 0) ) begin
+                        strb_mask[ offset-1 : 0] = 0;
+                    end
                 end
-            end
+
+                BURST_TYPE_WRAP: begin
+                    wrap_size                   = tsfr_size_per_beat * (aw_len + 1);
+                    wrap_container_num          = aw_len + 1;
+
+                    wrap_boundary_addr          = (aw_addr / wrap_size) * wrap_size;
+                    wrap_boundary_container_idx = (wrap_boundary_addr % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
+                    start_offset_containers     = (align_addr - wrap_boundary_addr) / tsfr_size_per_beat;
+                    current_container           = wrap_boundary_container_idx + ((start_offset_containers + i) % wrap_container_num);
+
+                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( current_container * tsfr_size_per_beat );
+
+                    if ( (i == 0) && (offset > 0) ) begin
+                        strb_mask[ offset-1 : 0] = 0;
+                    end
+                end
+
+                default: begin
+                    `uvm_error("ERROR", $sformatf("Unexpected burst type! (%0d)", aw_burst) )
+                end
+            endcase
 
             w_strb[i] &= strb_mask;
         end

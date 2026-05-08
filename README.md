@@ -32,15 +32,15 @@ Both passive and active agents are supported, and optional Bus Functional Models
 | Global  | ACLK       | In    | 1                 | Clock                              |
 |         | ARESETn    | In    | 1                 | Active-low reset                   |
 | AW      | AWID       | In    | `D_ID_WIDTH`      | Write address ID                   |
-|         | AWADDR     | In    | `D_ADDR_WIDTH`    | Write address                      |
+|         | AWADDR     | In    | `D_ADDR_WIDTH_BIT`    | Write address                      |
 |         | AWLEN      | In    | 8                 | Burst length                       |
 |         | AWSIZE     | In    | 3                 | Burst size                         |
 |         | AWBURST    | In    | 2 / enum          | Burst type                         |
 |         | AWVALID    | In    | 1                 | Address valid                      |
 |         | AWREADY    | Out   | 1                 | Address ready                      |
 | W       | WID        | In    | `D_ID_WIDTH`      | Write data ID                      |
-|         | WDATA      | In    | `D_DATA_WIDTH`    | Write data                         |
-|         | WSTRB      | In    | `D_DATA_WIDTH/8`  | Write strobes                      |
+|         | WDATA      | In    | `D_DATA_WIDTH_BIT`    | Write data                         |
+|         | WSTRB      | In    | `D_DATA_WIDTH_BIT/8`  | Write strobes                      |
 |         | WLAST      | In    | 1                 | Last write data                    |
 |         | WVALID     | In    | 1                 | Write valid                        |
 |         | WREADY     | Out   | 1                 | Write ready                        |
@@ -49,14 +49,14 @@ Both passive and active agents are supported, and optional Bus Functional Models
 |         | BVALID     | Out   | 1                 | Response valid                     |
 |         | BREADY     | In    | 1                 | Response ready                     |
 | AR      | ARID       | In    | `D_ID_WIDTH`      | Read address ID                    |
-|         | ARADDR     | In    | `D_ADDR_WIDTH`    | Read address                       |
+|         | ARADDR     | In    | `D_ADDR_WIDTH_BIT`    | Read address                       |
 |         | ARLEN      | In    | 8                 | Burst length                       |
 |         | ARSIZE     | In    | 3                 | Burst size                         |
 |         | ARBURST    | In    | 2 / enum          | Burst type                         |
 |         | ARVALID    | In    | 1                 | Read valid                         |
 |         | ARREADY    | Out   | 1                 | Read ready                         |
 | R       | RID        | Out   | `D_ID_WIDTH`      | Read data ID                       |
-|         | RDATA      | Out   | `D_DATA_WIDTH`    | Read data                          |
+|         | RDATA      | Out   | `D_DATA_WIDTH_BIT`    | Read data                          |
 |         | RRESP      | Out   | 2 / enum          | Read response                      |
 |         | RLAST      | Out   | 1                 | Last read                          |
 |         | RVALID     | Out   | 1                 | Read valid                         |

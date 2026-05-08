@@ -7,7 +7,7 @@ class axi_w_seq extends uvm_sequence #(axi_seq_item);;
     axi_seq_item               txn;
     
     rand bit[`D_ID_WIDTH-1:0]       aw_id;
-    rand bit[`D_ADDR_WIDTH-1:0]     aw_addr;
+    rand bit[`D_ADDR_WIDTH_BIT-1:0]     aw_addr;
     rand bit[7:0]                   aw_len;
     rand bit[2:0]                   aw_size;
     rand burst_type_e               aw_burst;

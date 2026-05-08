@@ -5,9 +5,9 @@ class axi_id_info_map;
 
     // Typedefs for cleaner associative array & queue declarations
     typedef bit [`D_ID_WIDTH-1:0]           axi_id_t;
-    typedef bit [`D_ADDR_WIDTH-1:0]         addr_q_t [$];
-    typedef bit [`D_DATA_WIDTH-1:0]         data_q_t [$];
-    typedef bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q_t [$];
+    typedef bit [`D_ADDR_WIDTH_BIT-1:0]         addr_q_t [$];
+    typedef bit [`D_DATA_WIDTH_BIT-1:0]         data_q_t [$];
+    typedef bit [(`D_DATA_WIDTH_BIT>>3)-1:0]    strb_q_t [$];
 
     axi_id_t                        id [$];
     bit [7:0]                       len      [axi_id_t];
@@ -21,15 +21,15 @@ class axi_id_info_map;
 
     function void set_id_info (
         bit [`D_ID_WIDTH-1:0]           id,
-        bit [`D_ADDR_WIDTH-1:0]         addr,
+        bit [`D_ADDR_WIDTH_BIT-1:0]         addr,
         bit [7:0]                       len,
         bit [2:0]                       size,
         burst_type_e                    burst,
         prot_s                          prot = 0,
 
         // ====== For Write ======
-        bit [`D_DATA_WIDTH-1:0]         data_q [$] = '{},
-        bit [(`D_DATA_WIDTH>>3)-1:0]    strb_q [$] = '{},
+        bit [`D_DATA_WIDTH_BIT-1:0]         data_q [$] = '{},
+        bit [(`D_DATA_WIDTH_BIT>>3)-1:0]    strb_q [$] = '{},
         bit                             complete = 0
     );
         // bit [`D_MEM_ADDR_WIDTH-1:0]     total_size;
@@ -42,13 +42,13 @@ class axi_id_info_map;
 
         // case ( burst )
         //     BURST_TYPE_FIXED: begin
-        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //         for ( [`D_ADDR_WIDTH_BIT-1:0] i=0; i<=len; i++) begin
         //             this.addr_q[id].push_back(addr);
         //         end
         //     end
 
         //     BURST_TYPE_INCR: begin
-        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //         for ( [`D_ADDR_WIDTH_BIT-1:0] i=0; i<=len; i++) begin
         //             this.addr_q[id].push_back( addr + (i * (1 << size)) );
         //         end
         //     end
@@ -56,7 +56,7 @@ class axi_id_info_map;
         //     BURST_TYPE_WRAP: begin
         //         total_size      = ( len + 1 ) * ( 1 << size );
         //         wrap_boundary   = ( addr / total_size ) * total_size;
-        //         for ( [`D_ADDR_WIDTH-1:0] i=0; i<=len; i++) begin
+        //         for ( [`D_ADDR_WIDTH_BIT-1:0] i=0; i<=len; i++) begin
         //             this.addr_q[id].push_back(
         //                 ( addr - wrap_boundary + i * (1<<size) ) % total_size
         //             );
@@ -122,7 +122,7 @@ class axi_id_info_map;
         return addr_q[id].size();
     endfunction
 
-    function bit [`D_ADDR_WIDTH-1:0] get_addr_by_id_idx ( bit [`D_ID_WIDTH-1:0] id, int idx );
+    function bit [`D_ADDR_WIDTH_BIT-1:0] get_addr_by_id_idx ( bit [`D_ID_WIDTH-1:0] id, int idx );
         return addr_q[id][idx];
     endfunction
 endclass

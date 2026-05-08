@@ -17,12 +17,12 @@ class axi_master_sequencer extends axi_seqr_base;
     endfunction
 
     // function void write ( axi_seq_item txn );
-    //     bit[`D_ADDR_WIDTH-1:0]      addr;
+    //     bit[`D_ADDR_WIDTH_BIT-1:0]      addr;
     //     bit[7:0]                    len;
     //     bit[2:0]                    size;
     //     burst_type_e                burst;
 
-    //     bit [`D_ADDR_WIDTH-1:0]     addr_q[$];
+    //     bit [`D_ADDR_WIDTH_BIT-1:0]     addr_q[$];
 
     //     case ( txn.kind )
     //         AW_TXN: begin
