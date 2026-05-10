@@ -123,33 +123,44 @@ class axi_seq_item extends uvm_sequence_item;
         super.new(name);
     endfunction: new
     
-    // Calculate WSTRB for each beat according to AWADDR, AWSIZE, AWLEN and AWBURST
+    // Calculates WSTRB for each beat based on AXI protocol parameters
     virtual function void post_randomize();
         
-        bit[`D_ADDR_WIDTH_BIT-1:0]          align_addr, wrap_boundary_addr;
-        bit[`D_ADDR_WIDTH_BYTE_2n-1:0]      tsfr_size_per_beat, wrap_size;
+        bit[`D_ADDR_WIDTH_BIT-1:0]          awaddr_container_base, wrap_boundary_base;
+        bit[`D_ADDR_WIDTH_BYTE_2n:0]        tsfr_size_per_beat, wrap_size;  // Reserve extra bit
 
         bit[`D_DATA_WIDTH_BYTE-1:0]         strb_mask;
-        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      container_num, wrap_container_num;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      container_cnt, wrap_container_cnt;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      awaddr_container_idx;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      offset;
 
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      wrap_boundary_container_idx;
-        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      start_offset_containers;
+        bit[`D_DATA_WIDTH_BYTE_2n-1:0]      awaddr_wrap_container_offset;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      current_container;
         
         tsfr_size_per_beat      = `D_DATA_WIDTH_BYTE'(1 << aw_size);
 
+        // Data range that transfered in each beat is within a single "container" on data bus
         awaddr_container_idx    = ( aw_addr % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
-        align_addr              = (aw_addr / tsfr_size_per_beat) * tsfr_size_per_beat;
+        awaddr_container_base   = (aw_addr / tsfr_size_per_beat) * tsfr_size_per_beat;
         offset                  = aw_addr % tsfr_size_per_beat;
-        container_num           = `D_DATA_WIDTH_BYTE / tsfr_size_per_beat;
+        container_cnt           = `D_DATA_WIDTH_BYTE / tsfr_size_per_beat;
 
         for ( int i=0; i<(aw_len+1); i++ ) begin
             
             strb_mask = `1;
 
             case ( aw_burst )
+                /* -------------------------------------------------------------------------
+                 * [BURST_TYPE_FIXED Diagram]
+                 * Assume: Bus=32B, Size=4B/beat, Unaligned AWADDR (Offset=1)
+                 *
+                 * Data Bus Bytes: 0...3 | 4...7 | 8..11 | ...
+                 * Containers    : [ C0] | [ C1] | [ C2] | ...
+                 * Beat 0 (i=0)  :  0000 | 0111  |  0000 | ... (Offset affects first beat)
+                 * Beat 1 (i=1)  :  0000 | 1111  |  0000 | ... 
+                 * Beat 2 (i=2)  :  0000 | 1111  |  0000 | ... 
+                 * -------------------------------------------------------------------------*/
                 BURST_TYPE_FIXED: begin
                     strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
                     
@@ -158,24 +169,47 @@ class axi_seq_item extends uvm_sequence_item;
                     end
                 end
 
+                /* -------------------------------------------------------------------------
+                 * [BURST_TYPE_INCR Diagram]
+                 * Assume: Bus=16B, Size=4B/beat, Starts from C2
+                 *
+                 * Data Bus Bytes: 0...3 | 4...7 | 8..11 | 12..15 
+                 * Containers    : [ C0] | [ C1] | [ C2] | [ C3] 
+                 * Beat 0 (i=0)  :  0000 | 0000  |  1111 |  0000 
+                 * Beat 1 (i=1)  :  0000 | 0000  |  0000 |  1111 
+                 * Beat 2 (i=2)  :  1111 | 0000  |  0000 |  0000  <-- Exceeds bus, wraps to C0
+                 * Beat 3 (i=3)  :  0000 | 1111  |  0000 |  0000 
+                 * -------------------------------------------------------------------------*/
                 BURST_TYPE_INCR: begin
-                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_num ) * tsfr_size_per_beat );
+                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_cnt ) * tsfr_size_per_beat );
                     
                     if ( (i == 0) && (offset > 0) ) begin
                         strb_mask[ offset-1 : 0] = 0;
                     end
                 end
 
+                /* -------------------------------------------------------------------------
+                 * [BURST_TYPE_WRAP Diagram]
+                 * Assume: Size=4B/beat, Len=3 (4 beats), Starts from C2
+                 *
+                 * Data Bus Bytes: 0...3 | 4...7 | 8..11 | 12.15 | 16...
+                 * Wrap Boundary : |<----- Wrap Size (16B) ----->|
+                 * Containers    : [ C0] | [ C1] | [ C2] | [ C3] | [ C4]
+                 * Beat 0 (i=0)  :  0000 | 0000  |  1111 |  0000 |  0000 
+                 * Beat 1 (i=1)  :  0000 | 0000  |  0000 |  1111 |  0000 
+                 * Beat 2 (i=2)  :  1111 | 0000  |  0000 |  0000 |  0000  <-- AXI Protocol Wrap
+                 * Beat 3 (i=3)  :  0000 | 1111  |  0000 |  0000 |  0000 
+                 * -------------------------------------------------------------------------*/
                 BURST_TYPE_WRAP: begin
-                    wrap_size                   = tsfr_size_per_beat * (aw_len + 1);
-                    wrap_container_num          = aw_len + 1;
+                    wrap_size                       = tsfr_size_per_beat * (aw_len + 1);
+                    wrap_container_cnt              = aw_len + 1;
 
-                    wrap_boundary_addr          = (aw_addr / wrap_size) * wrap_size;
-                    wrap_boundary_container_idx = (wrap_boundary_addr % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
-                    start_offset_containers     = (align_addr - wrap_boundary_addr) / tsfr_size_per_beat;
-                    current_container           = wrap_boundary_container_idx + ((start_offset_containers + i) % wrap_container_num);
+                    wrap_boundary_base              = (aw_addr / wrap_size) * wrap_size;
+                    wrap_boundary_container_idx     = (wrap_boundary_base % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
+                    awaddr_wrap_container_offset    = (awaddr_container_base - wrap_boundary_base) / tsfr_size_per_beat;
+                    current_container               = wrap_boundary_container_idx + ((awaddr_wrap_container_offset + i) % wrap_container_cnt);
 
-                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( current_container * tsfr_size_per_beat );
+                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( (current_container % container_cnt) * tsfr_size_per_beat );
 
                     if ( (i == 0) && (offset > 0) ) begin
                         strb_mask[ offset-1 : 0] = 0;
