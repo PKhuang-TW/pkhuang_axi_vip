@@ -12,7 +12,7 @@ package axi_vip_pkg;
     `include "axi_utils.svh"
 
     `include "axi_seq_item.sv"
-    `include "axi_id_info_map.sv"
+    // `include "axi_id_info_map.sv"
     `include "axi_mem_model.sv"
 
     `include "axi_monitor_base.sv"

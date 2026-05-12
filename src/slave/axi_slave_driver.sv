@@ -28,8 +28,8 @@ class axi_slave_driver extends axi_driver_base;
             forever begin listen_aw_channel()       ;end
             forever begin listen_w_channel()        ;end
             forever begin drive_b_channel()         ;end
-            forever begin listen_ar_channel()       ;end
-            forever begin drive_r_channel()        ;end
+            // forever begin listen_ar_channel()       ;end
+            // forever begin drive_r_channel()        ;end
             forever begin reset_signal_handler()    ;end
         join
     endtask
@@ -38,8 +38,8 @@ class axi_slave_driver extends axi_driver_base;
     extern virtual task listen_aw_channel();
     extern virtual task listen_w_channel();
     extern virtual task drive_b_channel();
-    extern virtual task listen_ar_channel();
-    extern virtual task drive_r_channel();
+    // extern virtual task listen_ar_channel();
+    // extern virtual task drive_r_channel();
     extern virtual task reset_signal_handler();
 
     extern virtual task reset_aw_signal();
@@ -203,72 +203,72 @@ task axi_slave_driver::drive_b_channel();
     end
 endtask : drive_b_channel
 
-task axi_slave_driver::listen_ar_channel();
-    begin
-        wait ( vif.slv_cb.ARVALID );
+// task axi_slave_driver::listen_ar_channel();
+//     begin
+//         wait ( vif.slv_cb.ARVALID );
 
-        `uvm_info(
-            "listen_ar_channel",
-            $sformatf("Handle AR Signal: ID = 0x%h", vif.slv_cb.ARID),
-            UVM_MEDIUM
-        )
+//         `uvm_info(
+//             "listen_ar_channel",
+//             $sformatf("Handle AR Signal: ID = 0x%h", vif.slv_cb.ARID),
+//             UVM_MEDIUM
+//         )
 
-        // mem_model.r_id_info_map.set_id_info (
-        //     .id(vif.slv_cb.ARID),
-        //     .addr(vif.slv_cb.ARADDR),
-        //     .len(vif.slv_cb.ARLEN),
-        //     .size(vif.slv_cb.ARSIZE),
-        //     .burst( burst_type_e'(vif.slv_cb.ARBURST) ),
-        //     .prot(vif.slv_cb.ARPROT)
-        // );
+//         // mem_model.r_id_info_map.set_id_info (
+//         //     .id(vif.slv_cb.ARID),
+//         //     .addr(vif.slv_cb.ARADDR),
+//         //     .len(vif.slv_cb.ARLEN),
+//         //     .size(vif.slv_cb.ARSIZE),
+//         //     .burst( burst_type_e'(vif.slv_cb.ARBURST) ),
+//         //     .prot(vif.slv_cb.ARPROT)
+//         // );
 
-        // r_q.push_back(vif.slv_cb.ARID);
+//         // r_q.push_back(vif.slv_cb.ARID);
 
-        vif.slv_cb.ARREADY <= 0;
-        wait_clk(1);
-        reset_ar_signal();
-    end
-endtask : listen_ar_channel
+//         vif.slv_cb.ARREADY <= 0;
+//         wait_clk(1);
+//         reset_ar_signal();
+//     end
+// endtask : listen_ar_channel
 
-task axi_slave_driver::drive_r_channel();
-    bit [`D_ID_WIDTH-1:0]    id;
-    bit [7:0]                len;
-    bit [`D_DATA_WIDTH_BIT-1:0]  data;
-    bit                      found_complete_id;
+// task axi_slave_driver::drive_r_channel();
+//     bit [`D_ID_WIDTH-1:0]    id;
+//     bit [7:0]                len;
+//     bit [`D_DATA_WIDTH_BIT-1:0]  data;
+//     bit                      found_complete_id;
 
-    begin
-        // Support interleaving Read transfer
-        wait ( mem_model.r_id_info_map.get_id_size() );
+//     begin
+//         Support interleaving Read transfer
+//         wait ( mem_model.r_id_info_map.get_id_size() );
 
-        id = mem_model.r_id_info_map.get_rand_id();
+//         id = mem_model.r_id_info_map.get_rand_id();
 
-        `uvm_info (
-            "drive_r_channel",
-            $sformatf("Handle R Signal: ID = 0x%h", id),
-            UVM_MEDIUM
-        )
+//         `uvm_info (
+//             "drive_r_channel",
+//             $sformatf("Handle R Signal: ID = 0x%h", id),
+//             UVM_MEDIUM
+//         )
 
-        mem_model.process_r_op ( id, data );
-        vif.slv_cb.RID     <= id;
-        vif.slv_cb.RDATA   <= data;
-        vif.slv_cb.RRESP   <= RSP_OKAY;  // default okay
+//         mem_model.process_r_op ( id, data );
+//         vif.slv_cb.RID     <= id;
+//         vif.slv_cb.RDATA   <= data;
+//         vif.slv_cb.RRESP   <= RSP_OKAY;  // default okay
 
-        if ( mem_model.r_id_info_map.get_addr_q_size_by_id(id) ) begin
-            vif.slv_cb.RLAST <= 0;
-        end else begin
-            vif.slv_cb.RLAST <= 1;
-            mem_model.clr_id_info (
-                .op(READ),
-                .id(id)
-            );
-        end
-        vif.slv_cb.RVALID  <= 1;
+//         if ( mem_model.r_id_info_map.get_addr_q_size_by_id(id) ) begin
+//             vif.slv_cb.RLAST <= 0;
+//         end else begin
+//             vif.slv_cb.RLAST <= 1;
+//             mem_model.clr_id_info (
+//                 .op(READ),
+//                 .id(id)
+//             );
+//         end
+//         vif.slv_cb.RVALID  <= 1;
 
-        wait_clk(1);
-        wait ( vif.slv_cb.RREADY );
-        reset_r_signal();
-    end
-endtask : drive_r_channel
+//         wait_clk(1);
+//         wait ( vif.slv_cb.RREADY );
+//         reset_r_signal();
+//     end
+// endtask : drive_r_channel
 
 task axi_slave_driver::reset_signal_handler();
     begin
