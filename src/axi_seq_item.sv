@@ -8,6 +8,7 @@ class axi_seq_item extends uvm_sequence_item;
 
     //  Group: Variables
     rand txn_kind_e                         kind;
+    rand bit                                narrow_tsfr;
 
     //-----------------------------------------------------------
     // Write 
@@ -48,10 +49,13 @@ class axi_seq_item extends uvm_sequence_item;
     localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH_BIT / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH_BIT / 8) : `D_MEM_SIZE;
 
     //-----------------------------------------------------------
-    
-    constraint c_kind   { soft kind dist { 0:=1, 3:=1 }; }  // AW: 50%, AR: 50%
-    constraint c_burst  { aw_burst <= BURST_TYPE_WRAP; ar_burst <= BURST_TYPE_WRAP; }
-    constraint c_id     { aw_id == w_id; }
+
+    constraint c_order              { solve narrow_tsfr before aw_size; }
+
+    constraint c_kind               { soft kind dist { 0:=1, 3:=1 }; }  // AW: 50%, AR: 50%
+    // constraint c_narrow_tsfr        { soft narrow_tsfr == 0; }
+    constraint c_burst              { aw_burst <= BURST_TYPE_WRAP; ar_burst <= BURST_TYPE_WRAP; }
+    constraint c_id                 { aw_id == w_id; }
 
     constraint c_len {
         if ( aw_burst == BURST_TYPE_FIXED ) {
@@ -72,8 +76,14 @@ class axi_seq_item extends uvm_sequence_item;
     }
 
     constraint c_size {
-        ( 1 << aw_size ) <= `D_DATA_WIDTH_BIT / 8;
-        ( 1 << ar_size ) <= `D_DATA_WIDTH_BIT / 8;
+        ( 1 << aw_size ) <= `D_DATA_WIDTH_BYTE;
+        ( 1 << ar_size ) <= `D_DATA_WIDTH_BYTE;
+
+        if ( narrow_tsfr ) {
+            ( 1 << aw_size ) < `D_DATA_WIDTH_BYTE;
+        } else {
+            ( 1 << aw_size ) == `D_DATA_WIDTH_BYTE;
+        }
     }
 
     constraint c_write_data_size {
@@ -129,7 +139,7 @@ class axi_seq_item extends uvm_sequence_item;
         bit[`D_ADDR_WIDTH_BIT-1:0]          awaddr_container_base, wrap_boundary_base;
         bit[`D_ADDR_WIDTH_BYTE_2n:0]        tsfr_size_per_beat, wrap_size;  // Reserve extra bit
 
-        bit[`D_DATA_WIDTH_BYTE-1:0]         strb_mask;
+        bit[`D_DATA_WIDTH_BYTE-1:0]         strb_mask, tmp_mask;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      container_cnt, wrap_container_cnt;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      awaddr_container_idx;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      offset;
@@ -150,6 +160,12 @@ class axi_seq_item extends uvm_sequence_item;
 
         `uvm_info ( "DEBUG", $sformatf("AWADDR: 0x%0h, AWSIZE: %0d, tsfr_size_per_beat: %0d, Container Index: %0d, Container Base: 0x%0h, Offset: %0d, Containers Count: %0d", aw_addr, aw_size, tsfr_size_per_beat, awaddr_container_idx, awaddr_container_base, offset, container_cnt), UVM_MEDIUM )
 
+        if ( narrow_tsfr ) begin
+            for ( int i=0; i<(aw_len+1); i++ ) begin
+                w_strb[i] = '1;
+            end
+        end
+
         for ( int i=0; i<(aw_len+1); i++ ) begin
             
             strb_mask = '1;
@@ -162,15 +178,14 @@ class axi_seq_item extends uvm_sequence_item;
                  * Data Bus Bytes: 0...3 | 4...7 | 8..11 | ...
                  * Containers    : [ C0] | [ C1] | [ C2] | ...
                  * Beat 0 (i=0)  :  0000 | 0111  |  0000 | ... (Offset affects first beat)
-                 * Beat 1 (i=1)  :  0000 | 1111  |  0000 | ... 
-                 * Beat 2 (i=2)  :  0000 | 1111  |  0000 | ... 
+                 * Beat 1 (i=1)  :  0000 | 0111  |  0000 | ... 
+                 * Beat 2 (i=2)  :  0000 | 0111  |  0000 | ... 
                  * -------------------------------------------------------------------------*/
                 BURST_TYPE_FIXED: begin
-                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
-                    
-                    if ( offset > 0 ) begin
-                        strb_mask &= ( '1 << offset );
-                    end
+                    tmp_mask = ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 );
+                    tmp_mask >>= offset;  // Shift right first to create mask for unaligned access
+                    tmp_mask <<= offset;  // Shift left back to align with the actual data position on the bus
+                    strb_mask &= tmp_mask << ( awaddr_container_idx * tsfr_size_per_beat );
                 end
 
                 /* -------------------------------------------------------------------------
@@ -187,11 +202,14 @@ class axi_seq_item extends uvm_sequence_item;
                 BURST_TYPE_INCR: begin
                     `uvm_info("DEBUG", $sformatf("INCR Burst - Beat %0d: Container Index = ( %0d + %0d ) %% %0d = %0d", i, awaddr_container_idx, i, container_cnt, (awaddr_container_idx + i) % container_cnt), UVM_HIGH)
 
-                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_cnt ) * tsfr_size_per_beat );
-                    
-                    if ( (i == 0) && (offset > 0) ) begin
-                        strb_mask &= ( '1 << offset );
+                    tmp_mask = ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 );
+
+                    if ( (i == 0) && (offset > 0) ) begin  // Only the first beat can be affected by unaligned offset
+                        tmp_mask >>= offset;  // Shift right first to create mask for unaligned access
+                        tmp_mask <<= offset;  // Shift left back to align with the actual data position on the bus
                     end
+
+                    strb_mask &= tmp_mask << ( ( (awaddr_container_idx + i) % container_cnt ) * tsfr_size_per_beat );
                 end
 
                 /* -------------------------------------------------------------------------
@@ -215,11 +233,14 @@ class axi_seq_item extends uvm_sequence_item;
                     awaddr_wrap_container_offset    = (awaddr_container_base - wrap_boundary_base) / tsfr_size_per_beat;
                     current_container               = wrap_boundary_container_idx + ((awaddr_wrap_container_offset + i) % wrap_container_cnt);
 
-                    strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( (current_container % container_cnt) * tsfr_size_per_beat );
-
-                    if ( (i == 0) && (offset > 0) ) begin
-                        strb_mask &= ( '1 << offset );
+                    tmp_mask = ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 );
+                    
+                    if ( (i == 0) && (offset > 0) ) begin  // Only the first beat can be affected by unaligned offset
+                        tmp_mask >>= offset;  // Shift right first to create mask for unaligned access
+                        tmp_mask <<= offset;  // Shift left back to align with the actual data position on the bus
                     end
+
+                    strb_mask &= tmp_mask << ( (current_container % container_cnt) * tsfr_size_per_beat );
                 end
 
                 default: begin
@@ -238,14 +259,14 @@ class axi_seq_item extends uvm_sequence_item;
         string s = "";
 
         if ( kind == AW_TXN || kind == W_TXN ) begin
-            s = { s, $sformatf("AWID: %h, AWADDR: 0x%0h, AWLEN: %0d, AWSIZE: %0d, AWBURST: %s", aw_id, aw_addr, aw_len, aw_size, aw_burst.name()) };
+            s = { s, $sformatf("AWID: 0x%0h, AWADDR: 0x%0h, AWLEN: %0d, AWSIZE: %0d, AWBURST: %s", aw_id, aw_addr, aw_len, aw_size, aw_burst.name()) };
 
             s = { s, "\nW_DATA: "};
             for ( int i=0; i<aw_len+1; i++ ) begin
-                s = { s, $sformatf("\n[%0d] Data: 0x%h / Strb: 0x%b", i, w_data[i], w_strb[i]) };
+                s = { s, $sformatf("\n[%0d] Data: 0x%0h / Strb: 0x%b", i, w_data[i], w_strb[i]) };
             end
         end else if ( kind == AR_TXN ) begin
-            s = { s, $sformatf("ARID: %h, ARADDR: 0x%0h, ARLEN: %0d, ARSIZE: %0d, ARBURST: %s", ar_id, ar_addr, ar_len, ar_size, ar_burst.name()) };
+            s = { s, $sformatf("ARID: 0x%0h, ARADDR: 0x%0h, ARLEN: %0d, ARSIZE: %0d, ARBURST: %s", ar_id, ar_addr, ar_len, ar_size, ar_burst.name()) };
         end else begin
             s = "Unknown transaction type!";
         end
