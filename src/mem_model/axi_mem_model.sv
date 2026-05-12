@@ -1,5 +1,5 @@
-`ifndef AXI_SLAVE_MEM_MODEL_SV
-`define AXI_SLAVE_MEM_MODEL_SV
+`ifndef AXI_MEM_MODEL_SV
+`define AXI_MEM_MODEL_SV
 
 typedef bit [`D_ADDR_WIDTH_BIT-1:0] addr_q_t[$];
 
@@ -9,7 +9,7 @@ class axi_mem_model extends uvm_object;
     bit [`D_MEM_SIZE-1:0][7:0]      mem;
     bit [`D_MEM_SIZE-1:0]           rc_lock;
 
-    function new ( string name = "name" );
+    function new ( string name = "axi_mem_model" );
         super.new(name);
     endfunction
 
@@ -17,13 +17,13 @@ class axi_mem_model extends uvm_object;
     extern virtual function addr_q_t get_addr_q ( axi_seq_item aw_txn );
     extern virtual task handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
 
-    extern virtual function void narrow_tsfr_handler();
-    extern virtual function void full_tsfr_handler();
-    extern virtual function void align_container_handler();
+    // extern virtual function void narrow_tsfr_handler();
+    // extern virtual function void full_tsfr_handler();
+    // extern virtual function void align_container_handler();
 
 endclass : axi_mem_model
 
-virtual function void axi_mem_model::display_mem();
+function void axi_mem_model::display_mem();
     string row_str;
     int addr;
     
@@ -43,7 +43,7 @@ virtual function void axi_mem_model::display_mem();
     `uvm_info("MEM_DUMP", "----------------------------------------------------------------", UVM_LOW)
 endfunction
 
-virtual function addr_q_t axi_mem_model::get_addr_q ( axi_seq_item aw_txn );
+function addr_q_t axi_mem_model::get_addr_q ( axi_seq_item aw_txn );
 
     bit [`D_ADDR_WIDTH_BIT-1:0]         addr;
     bit [7:0]                       len;
@@ -89,18 +89,23 @@ virtual function addr_q_t axi_mem_model::get_addr_q ( axi_seq_item aw_txn );
     return addr_q;
 endfunction
 
-virtual task axi_mem_model::handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
+task axi_mem_model::handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
 
-    addr_q_t                addr_q;
-    int                     size_per_beat;
+    addr_q_t                    addr_q;
+    int                         size_per_beat;
     bit[`D_DATA_WIDTH_BIT-1:0]  tmp_data;
+    bit[`D_ADDR_WIDTH_BIT-1:0]  cur_addr;
 
     addr_q = get_addr_q(aw_txn);
     size_per_beat = 1 << aw_txn.aw_size;
 
     for ( int idx=0; idx<=aw_txn.aw_len; idx++ ) begin
+        cur_addr = addr_q.pop_front();
         tmp_data = w_txn.w_data.pop_front();
-        mem[addr_q.pop_front() +: (size_per_beat << 3)] = w_txn.w_data.pop_front();
+
+        for ( int i=0; i<size_per_beat; i++ ) begin
+            mem[cur_addr + i] = tmp_data[i*8 +: 8];
+        end
     end
     display_mem();
 endtask

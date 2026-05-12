@@ -7,43 +7,43 @@ import axi_typedef::*;
 class axi_seq_item extends uvm_sequence_item;
 
     //  Group: Variables
-    rand txn_kind_e                     kind;
+    rand txn_kind_e                         kind;
 
     //-----------------------------------------------------------
     // Write 
     //-----------------------------------------------------------
-    rand bit[`D_ID_WIDTH-1:0]           aw_id;
+    rand bit[`D_ID_WIDTH-1:0]               aw_id;
     rand bit[`D_ADDR_WIDTH_BIT-1:0]         aw_addr;
-    rand bit[7:0]                       aw_len;
-    rand bit[2:0]                       aw_size;
-    rand burst_type_e                   aw_burst;
-    rand prot_s                         aw_prot;
+    rand bit[7:0]                           aw_len;
+    rand bit[2:0]                           aw_size;
+    rand burst_type_e                       aw_burst;
+    rand prot_s                             aw_prot;
 
-    rand bit[`D_ID_WIDTH-1:0]           w_id;
+    rand bit[`D_ID_WIDTH-1:0]               w_id;
     rand bit[`D_DATA_WIDTH_BIT-1:0]         w_data[$];
     rand bit[(`D_DATA_WIDTH_BIT>>3)-1:0]    w_strb[$];
-    bit                                 w_last;
+    bit                                     w_last;
 
-    bit[`D_ID_WIDTH-1:0]                b_id;
-    rsp_e                               b_resp;
-    rsp_e                               exp_b_resp;
+    bit[`D_ID_WIDTH-1:0]                    b_id;
+    rsp_e                                   b_resp;
+    rsp_e                                   exp_b_resp;
 
 
     //-----------------------------------------------------------
     // Read 
     //-----------------------------------------------------------
-    rand bit[`D_ID_WIDTH-1:0]           ar_id;
+    rand bit[`D_ID_WIDTH-1:0]               ar_id;
     rand bit[`D_ADDR_WIDTH_BIT-1:0]         ar_addr;
-    rand bit[7:0]                       ar_len;
-    rand bit[2:0]                       ar_size;
-    rand burst_type_e                   ar_burst;
-    rand prot_s                         ar_prot;
+    rand bit[7:0]                           ar_len;
+    rand bit[2:0]                           ar_size;
+    rand burst_type_e                       ar_burst;
+    rand prot_s                             ar_prot;
 
-    bit[`D_ID_WIDTH-1:0]                r_id;
+    bit[`D_ID_WIDTH-1:0]                    r_id;
     bit[`D_DATA_WIDTH_BIT-1:0]              r_data[$];
-    bit                                 r_last;
-    rsp_e                               r_resp[$];
-    rsp_e                               exp_r_resp[$];
+    bit                                     r_last;
+    rsp_e                                   r_resp[$];
+    rsp_e                                   exp_r_resp[$];
 
     localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH_BIT / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH_BIT / 8) : `D_MEM_SIZE;
 
@@ -137,8 +137,10 @@ class axi_seq_item extends uvm_sequence_item;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      wrap_boundary_container_idx;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      awaddr_wrap_container_offset;
         bit[`D_DATA_WIDTH_BYTE_2n-1:0]      current_container;
+
+        if ( kind != AW_TXN ) return;  // Only calculate WSTRB for write transactions
         
-        tsfr_size_per_beat      = `D_DATA_WIDTH_BYTE'(1 << aw_size);
+        tsfr_size_per_beat      = (1 << aw_size);
 
         // Data range that transfered in each beat is within a single "container" on data bus
         awaddr_container_idx    = ( aw_addr % `D_DATA_WIDTH_BYTE) / tsfr_size_per_beat;
@@ -146,9 +148,11 @@ class axi_seq_item extends uvm_sequence_item;
         offset                  = aw_addr % tsfr_size_per_beat;
         container_cnt           = `D_DATA_WIDTH_BYTE / tsfr_size_per_beat;
 
+        `uvm_info ( "DEBUG", $sformatf("AWADDR: 0x%0h, AWSIZE: %0d, tsfr_size_per_beat: %0d, Container Index: %0d, Container Base: 0x%0h, Offset: %0d, Containers Count: %0d", aw_addr, aw_size, tsfr_size_per_beat, awaddr_container_idx, awaddr_container_base, offset, container_cnt), UVM_MEDIUM )
+
         for ( int i=0; i<(aw_len+1); i++ ) begin
             
-            strb_mask = `1;
+            strb_mask = '1;
 
             case ( aw_burst )
                 /* -------------------------------------------------------------------------
@@ -165,7 +169,7 @@ class axi_seq_item extends uvm_sequence_item;
                     strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( awaddr_container_idx * tsfr_size_per_beat );
                     
                     if ( offset > 0 ) begin
-                        strb_mask[ offset-1 : 0] = 0;
+                        strb_mask &= ( '1 << offset );
                     end
                 end
 
@@ -181,10 +185,12 @@ class axi_seq_item extends uvm_sequence_item;
                  * Beat 3 (i=3)  :  0000 | 1111  |  0000 |  0000 
                  * -------------------------------------------------------------------------*/
                 BURST_TYPE_INCR: begin
+                    `uvm_info("DEBUG", $sformatf("INCR Burst - Beat %0d: Container Index = ( %0d + %0d ) %% %0d = %0d", i, awaddr_container_idx, i, container_cnt, (awaddr_container_idx + i) % container_cnt), UVM_HIGH)
+
                     strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( ( (awaddr_container_idx + i) % container_cnt ) * tsfr_size_per_beat );
                     
                     if ( (i == 0) && (offset > 0) ) begin
-                        strb_mask[ offset-1 : 0] = 0;
+                        strb_mask &= ( '1 << offset );
                     end
                 end
 
@@ -212,7 +218,7 @@ class axi_seq_item extends uvm_sequence_item;
                     strb_mask &= ( `D_DATA_WIDTH_BYTE'( 1 << tsfr_size_per_beat ) - 1 ) << ( (current_container % container_cnt) * tsfr_size_per_beat );
 
                     if ( (i == 0) && (offset > 0) ) begin
-                        strb_mask[ offset-1 : 0] = 0;
+                        strb_mask &= ( '1 << offset );
                     end
                 end
 
@@ -224,7 +230,28 @@ class axi_seq_item extends uvm_sequence_item;
             w_strb[i] &= strb_mask;
         end
 
+        `uvm_info("SEQ_ITEM", $sformatf("%s", convert2string()), UVM_MEDIUM)
+
     endfunction: post_randomize
+
+    virtual function string convert2string();
+        string s = "";
+
+        if ( kind == AW_TXN || kind == W_TXN ) begin
+            s = { s, $sformatf("AWID: %h, AWADDR: 0x%0h, AWLEN: %0d, AWSIZE: %0d, AWBURST: %s", aw_id, aw_addr, aw_len, aw_size, aw_burst.name()) };
+
+            s = { s, "\nW_DATA: "};
+            for ( int i=0; i<aw_len+1; i++ ) begin
+                s = { s, $sformatf("\n[%0d] Data: 0x%h / Strb: 0x%b", i, w_data[i], w_strb[i]) };
+            end
+        end else if ( kind == AR_TXN ) begin
+            s = { s, $sformatf("ARID: %h, ARADDR: 0x%0h, ARLEN: %0d, ARSIZE: %0d, ARBURST: %s", ar_id, ar_addr, ar_len, ar_size, ar_burst.name()) };
+        end else begin
+            s = "Unknown transaction type!";
+        end
+
+        return s;
+    endfunction
     
 endclass: axi_seq_item
 
