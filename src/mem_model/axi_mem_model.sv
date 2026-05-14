@@ -5,17 +5,20 @@ typedef bit [`D_ADDR_WIDTH_BIT-1:0] addr_q_t[$];
 
 class axi_mem_model extends uvm_object;
     `uvm_object_utils(axi_mem_model)
+
+    static bit [`D_ADDR_WIDTH_BYTE-1:0]    rc_lock;
     
-    bit [`D_MEM_SIZE-1:0][7:0]      mem;
-    bit [`D_MEM_SIZE-1:0]           rc_lock;
+    bit [`D_ADDR_WIDTH_BYTE-1:0][7:0]      mem;
 
     function new ( string name = "axi_mem_model" );
         super.new(name);
+        reset_mem();
     endfunction
 
     extern virtual function void display_mem();
     extern virtual function addr_q_t get_addr_q ( axi_seq_item aw_txn );
     extern virtual task handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
+    extern virtual task reset_mem();
 
 endclass : axi_mem_model
 
@@ -24,12 +27,12 @@ function void axi_mem_model::display_mem();
     int addr;
     
     `uvm_info("MEM_DUMP", "------------------ Memory Dump (16 bytes/row) ------------------", UVM_LOW)        
-    for (int i = 0; i < `D_MEM_SIZE; i += 16) begin
+    for (int i = 0; i < `D_ADDR_WIDTH_BYTE; i += 16) begin
         row_str = $sformatf("Addr 0x%05h: ", i);
         
         for (int j = 0; j < 16; j++) begin
             addr = i + j;
-            if (addr < `D_MEM_SIZE) begin
+            if (addr < `D_ADDR_WIDTH_BYTE) begin
                 row_str = {row_str, $sformatf("%02h ", mem[addr])};
             end
         end
@@ -63,7 +66,7 @@ function addr_q_t axi_mem_model::get_addr_q ( axi_seq_item aw_txn );
 
         BURST_TYPE_INCR: begin
             for ( bit [`D_ADDR_WIDTH_BIT-1:0] i=0; i<=len; i++) begin
-                addr_q.push_back( (addr + (i * size)) % `D_MEM_SIZE / size * size );
+                addr_q.push_back( (addr + (i * size)) % `D_ADDR_WIDTH_BYTE / size * size );
             end
         end
 
@@ -107,5 +110,12 @@ task axi_mem_model::handle_wr_txn ( axi_seq_item aw_txn, axi_seq_item w_txn );
     end
     display_mem();
 endtask
+
+task axi_mem_model::reset_mem();
+    for ( int i=0; i<`D_ADDR_WIDTH_BYTE; i++ ) begin
+        rc_lock[i] = 0;
+        mem[i] = 0;
+    end
+endtask : reset_mem
 
 `endif
