@@ -4,8 +4,6 @@
 class axi_slave_driver extends axi_driver_base;
     `uvm_component_utils(axi_slave_driver)
 
-    // axi_mem_model                       mem_model;
-
     uvm_analysis_port #(axi_seq_item)   aw_ap, w_ap;
 
     axi_seq_item                        b_q[$];
@@ -90,14 +88,6 @@ task axi_slave_driver::listen_aw_channel();
             $sformatf("Handle AW Signal: ID = 0x%h", vif.slv_cb.AWID),
             UVM_MEDIUM
         )
-        // mem_model.w_id_info_map.set_id_info (
-        //     .id(vif.slv_cb.AWID),
-        //     .addr(vif.slv_cb.AWADDR),
-        //     .len(vif.slv_cb.AWLEN),
-        //     .size(vif.slv_cb.AWSIZE),
-        //     .burst( burst_type_e'(vif.slv_cb.AWBURST) ),
-        //     .prot(vif.slv_cb.AWPROT)
-        // );
 
         txn = axi_seq_item::type_id::create("txn");
         txn.kind        = AW_TXN;
@@ -129,21 +119,6 @@ task axi_slave_driver::listen_w_channel();
             UVM_MEDIUM
         )
 
-        // fork
-        //     begin
-        //         mem_model.process_w_op (
-        //             .id(vif.slv_cb.WID),
-        //             .data(vif.slv_cb.WDATA),
-        //             .strb(vif.slv_cb.WSTRB),
-        //             .last(vif.slv_cb.WLAST)
-        //         );
-        //     end
-        //     begin
-        //         vif.slv_cb.WREADY <= 0;
-        //         wait_clk(1);
-        //     end
-        // join
-
         txn = axi_seq_item::type_id::create("txn");
         txn.kind        = W_TXN;
         txn.w_id       = vif.slv_cb.WID;
@@ -164,8 +139,7 @@ task axi_slave_driver::listen_w_channel();
 endtask : listen_w_channel
  
 task axi_slave_driver::drive_b_channel();
-    // bit                     found_complete_id;
-    // bit [`D_ID_WIDTH-1:0]   complete_id;
+
     axi_seq_item    txn;
 
     begin
@@ -180,26 +154,6 @@ task axi_slave_driver::drive_b_channel();
 
         wait_clk(1);
         reset_b_signal();
-
-        // mem_model.process_b_op ( found_complete_id, complete_id );
-        // if ( found_complete_id ) begin
-        //     `uvm_info(
-        //         "drive_b_channel",
-        //         $sformatf("Handle B Signal: ID = 0x%h", complete_id),
-        //         UVM_MEDIUM
-        //     )
-        //     vif.slv_cb.BRESP   <= RSP_OKAY;  // default okay
-        //     vif.slv_cb.BID     <= complete_id;
-        //     mem_model.clr_id_info (
-        //         .op(WRITE),
-        //         .id(complete_id)
-        //     );
-        //     vif.slv_cb.BVALID  <= 1;
-        //     wait_clk(1);
-        //     reset_b_signal();
-        // end else begin
-        //     wait_clk(1);
-        // end
     end
 endtask : drive_b_channel
 

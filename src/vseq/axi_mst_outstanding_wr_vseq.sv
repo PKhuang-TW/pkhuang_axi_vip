@@ -21,7 +21,7 @@ class axi_mst_outstanding_wr_vseq extends axi_vseq_base;
     virtual task body();
 
         int aw_idx, w_idx;
-        bit[`D_ID_WIDTH-1:0] exp_id_q[$], rcv_id_q[$];
+        bit[`D_ID_WIDTH-1:0] exp_id_q[$], rcv_id_q[$], aw_order_q[$];
 
         super.body();
         
@@ -42,6 +42,7 @@ class axi_mst_outstanding_wr_vseq extends axi_vseq_base;
             repeat(seq_num) begin
                 aw_idx = $urandom_range(0, aw_txn_q.size()-1);
                 aw_txn = aw_txn_q[aw_idx];
+                aw_idx_q.push_back(aw_idx);
                 exp_id_q.push_back(aw_txn.aw_id);
                 aw_txn_q.delete(aw_idx);
 
@@ -49,22 +50,30 @@ class axi_mst_outstanding_wr_vseq extends axi_vseq_base;
                 aw_seq.txn = aw_txn;
                 aw_seq.start ( p_sequencer.seqr_mst );
                 `uvm_info("outstanding_wr_vseq", $sformatf("AW TXN sent: ID = 0x%h", aw_seq.txn.aw_id), UVM_LOW)
+            
+                @(p_sequencer.vif.ACLK);
             end
 
-            repeat(seq_num) begin
-                w_idx = $urandom_range(0, w_txn_q.size()-1);
-                w_txn = w_txn_q[w_idx];
-                w_txn_q.delete(w_idx);
+            while (w_txn_q.size() > 0) begin
+                // AXI-4 removed WID, so master has to follow the order of AW to send W
+                if ( aw_idx_q.size() ) begin
+                    w_idx = aw_idx_q.pop_front();
+                    w_txn = w_txn_q[w_idx];
+                    w_txn_q.delete(w_idx);
 
-                w_seq = axi_w_seq :: type_id :: create ("w_seq");
-                w_seq.txn = w_txn;
-                w_seq.start ( p_sequencer.seqr_mst );
-                `uvm_info("outstanding_wr_vseq", $sformatf("W TXN sent: ID = 0x%h", w_seq.txn.w_id), UVM_LOW)
+                    w_seq = axi_w_seq :: type_id :: create ("w_seq");
+                    w_seq.txn = w_txn;
+                    w_seq.start ( p_sequencer.seqr_mst );
+                    `uvm_info("outstanding_wr_vseq", $sformatf("W TXN sent: ID = 0x%h", w_seq.txn.w_id), UVM_LOW)
+                end
+                @(p_sequencer.vif.ACLK);
             end
 
             repeat(seq_num) begin
                 `uvm_do_on ( b_seq, p_sequencer.seqr_mst )
                 rcv_id_q.push_back(b_seq.rcv_id);
+            
+                @(p_sequencer.vif.ACLK);
             end
         join
 

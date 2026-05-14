@@ -20,7 +20,7 @@ class axi_seq_item extends uvm_sequence_item;
     rand burst_type_e                       aw_burst;
     rand prot_s                             aw_prot;
 
-    rand bit[`D_ID_WIDTH-1:0]               w_id;
+    rand bit[`D_ID_WIDTH-1:0]               w_id;  // AXI4 deprecates WID, thus not used in this VIP
     rand bit[`D_DATA_WIDTH_BIT-1:0]         w_data[$];
     rand bit[(`D_DATA_WIDTH_BIT>>3)-1:0]    w_strb[$];
     bit                                     w_last;
@@ -46,6 +46,8 @@ class axi_seq_item extends uvm_sequence_item;
     rsp_e                                   r_resp[$];
     rsp_e                                   exp_r_resp[$];
 
+    //-----------------------------------------------------------
+    
     localparam int MAX_TXN_SIZE = (`D_DATA_WIDTH_BIT / 8) < `D_MEM_SIZE ? $clog2(`D_DATA_WIDTH_BIT / 8) : `D_MEM_SIZE;
 
     //-----------------------------------------------------------
