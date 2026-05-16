@@ -5,8 +5,8 @@ class axi_slave_sequencer extends axi_seqr_base;
     `uvm_component_utils(axi_slave_sequencer)
 
     axi_mem_model           mem;
-    axi_seq_item            aw_pending_q[bit[`D_ID_WIDTH-1:0]][$];
-    axi_seq_item            w_pending_q[bit[`D_ID_WIDTH-1:0]][$];
+    axi_seq_item            aw_pending_q[$];
+    axi_seq_item            w_pending_q[$];
 
     `uvm_analysis_imp_decl(_aw)
     `uvm_analysis_imp_decl(_w)
@@ -28,11 +28,15 @@ class axi_slave_sequencer extends axi_seqr_base;
     endfunction
 
     virtual function void write_aw ( axi_seq_item aw_txn );
-        aw_pending_q[aw_txn.aw_id].push_back(aw_txn);
+        // AXI-4 Slave handles AW and W transaction inorder
+        aw_pending_q.push_back(aw_txn);
+        `uvm_info ("SLV_GET_AW_TXN", $sformatf("Get AW ID: 0x%h", aw_txn.id), UVM_LOW)
     endfunction
 
     virtual function void write_w ( axi_seq_item w_txn );
-        w_pending_q[w_txn.w_id].push_back(w_txn);
+        // AXI-4 Slave handles W transaction without handling WID
+        w_pending_q.push_back(w_txn);
+        `uvm_info ("SLV_GET_W_TXN", $sformatf("Get W ID: 0x%h", w_txn.id), UVM_LOW)
     endfunction
     
 endclass
