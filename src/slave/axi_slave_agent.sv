@@ -38,8 +38,8 @@ class axi_slave_agent extends axi_agent_base;
         $cast(slv_drv, drv);
         $cast(slv_seqr, seqr);
 
-        slv_drv.aw_ap.connect ( slv_seqr.aw_fifo.analysis_export );
-        slv_drv.w_ap.connect ( slv_seqr.w_fifo.analysis_export );
+        slv_drv.aw_ap.connect ( slv_seqr.aw_export );
+        slv_drv.w_ap.connect ( slv_seqr.w_export );
     endfunction
 endclass
 
